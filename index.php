@@ -1,7 +1,7 @@
 <?php
 session_start();
-// $API_BASE = "http://localhost:5001";
-$API_BASE = "https://chatbot-1-v3ij.onrender.com";
+$API_BASE = "http://localhost:5001";
+
 
 // Handle session set
 if(isset($_GET['set_session']) && !empty($_GET['username'])) {
@@ -537,6 +537,7 @@ function fillForm(cb){
 </script>
 </body>
 </html>
+
 
 
 
