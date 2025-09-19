@@ -288,6 +288,17 @@ def chat():
                             doc[key] = value.isoformat()
             all_data[collection] = documents
         data_desc = "MongoDB data"
+    elif data_source == 'postgresql':
+        all_data = {}
+        for table in selected_tables:
+            cursor = db_conn.cursor()
+            # Wrap table name in double quotes to preserve case
+            cursor.execute(f'SELECT * FROM "{table}"')
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            all_data[table] = [dict(zip(columns, row)) for row in rows]
+            cursor.close()
+        data_desc = "PostgreSQL data"
     else:
         all_data = {}
         for table in selected_tables:
@@ -299,7 +310,7 @@ def chat():
             cursor.close()
         data_desc = "Database data"
 
-    prompt = f"You are an assistant. {data_desc}: {json.dumps(all_data, indent=2)}\nUser: {user_input}\nAnswer:"
+    prompt = f"You are an assistant. {data_desc}: {json.dumps(all_data, indent=2, default=str)}\nUser: {user_input}\nAnswer:"
 
     if gemini_client is None:
         return jsonify({'response': 'Gemini client not initialized. Please set credentials first.'})
