@@ -1,6 +1,6 @@
 <?php
 session_start();
-$API_BASE = "http://localhost:5001";
+$API_BASE = "http://localhost:8080";
 
 
 // Handle session set
@@ -141,6 +141,7 @@ if (isset($_GET['logout'])) {
                 <option value="postgresql">PostgreSQL</option>
                 <option value="neo4j">Neo4j</option>
                 <option value="mongodb">MongoDB</option>
+                <option value="oracle">Oracle</option>
             </select>
         </div>
 
@@ -306,6 +307,8 @@ function onDataSourceChange() {
             document.getElementById('db_port').value = '3306';
         } else if (dataSource === 'postgresql') {
             document.getElementById('db_port').value = '5432';
+        } else if (dataSource === 'oracle') {
+            document.getElementById('db_port').value = '1521';
         }
     }
 }

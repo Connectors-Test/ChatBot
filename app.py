@@ -7,6 +7,7 @@ import pymysql
 import psycopg2
 from neo4j import GraphDatabase
 from pymongo import MongoClient
+import oracledb
 import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
@@ -229,6 +230,33 @@ def set_credentials():
         except Exception as e:
             return jsonify({'error': f'MongoDB connection failed: {str(e)}'}), 400
 
+    elif data_source == 'oracle':
+        try:
+            # Oracle connection using oracledb
+            dsn = oracledb.makedsn(
+                CONFIG['db_host'],
+                CONFIG['db_port'],
+                service_name=CONFIG['db_name']
+            )
+            db_conn = oracledb.connect(
+                user=CONFIG['db_username'],
+                password=CONFIG['db_password'],
+                dsn=dsn
+            )
+            cursor = db_conn.cursor()
+            # Get all tables from Oracle database
+            cursor.execute("""
+                SELECT table_name
+                FROM all_tables
+                WHERE owner = :owner
+                ORDER BY table_name
+            """, {'owner': CONFIG['db_username'].upper()})
+            items = [row[0] for row in cursor.fetchall()]
+            cursor.close()
+            return jsonify({'type': 'tables', 'items': items})
+        except Exception as e:
+            return jsonify({'error': f'Oracle connection failed: {str(e)}'}), 400
+
     else:
         return jsonify({'error': 'Invalid data source'}), 400
 
@@ -256,7 +284,7 @@ def chat():
 
     if data_source == 'google_sheets' and not worksheets:
         return jsonify({'response': 'Select at least one sheet first.'})
-    elif data_source in ['mysql', 'postgresql', 'neo4j', 'mongodb'] and not selected_tables:
+    elif data_source in ['mysql', 'postgresql', 'neo4j', 'mongodb', 'oracle'] and not selected_tables:
         return jsonify({'response': 'Select at least one item first.'})
 
     user_input = request.json.get('message')
@@ -299,6 +327,16 @@ def chat():
             all_data[table] = [dict(zip(columns, row)) for row in rows]
             cursor.close()
         data_desc = "PostgreSQL data"
+    elif data_source == 'oracle':
+        all_data = {}
+        for table in selected_tables:
+            cursor = db_conn.cursor()
+            cursor.execute(f"SELECT * FROM {table}")
+            columns = [desc[0] for desc in cursor.description]
+            rows = cursor.fetchall()
+            all_data[table] = [dict(zip(columns, row)) for row in rows]
+            cursor.close()
+        data_desc = "Oracle data"
     else:
         all_data = {}
         for table in selected_tables:
@@ -430,4 +468,4 @@ def list_chatbots():
     return jsonify([dict(row) for row in rows])
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=True, host='0.0.0.0', port=8080)
