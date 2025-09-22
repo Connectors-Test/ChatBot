@@ -16,7 +16,7 @@ project-root/
 │   ├── tests/              # Backend tests
 │   ├── requirements.txt    # Python dependencies
 │   ├── config.py           # Flask config
-│   └── wsgi.py             # Entry point for Flask
+   └── app.py             # Entry point for Flask
 │
 │── frontend/               # PHP frontend
 │   ├── public/             # Public assets (CSS, JS, images)
@@ -96,7 +96,7 @@ project-root/
 1. **Start Backend**:
    ```bash
    cd backend
-   python wsgi.py
+   python app.py
    ```
    Backend will be available at `http://localhost:5001`
 
