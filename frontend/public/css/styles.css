@@ -42,3 +42,144 @@
 #sheetSelection {
     margin-top: 10px;
 }
+
+/* Form improvements */
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+fieldset {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+legend.visually-hidden {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.form-text {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.text-danger {
+    color: #dc3545 !important;
+}
+
+/* Loading Indicator Styles */
+#loadingIndicator {
+    transition: all 0.3s ease;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+#loadingIndicator .spinner-border {
+    animation: spinner-border 0.75s linear infinite;
+}
+
+#loadingIndicator p {
+    font-weight: 500;
+    margin-bottom: 0;
+    color: #495057;
+}
+
+@keyframes spinner-border {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Invisible Button Styles */
+.invisible-btn {
+    position: absolute;
+    top: 20px;
+    right: 120px;
+    width: 30px;
+    height: 30px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    z-index: 1000;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: auto;
+}
+
+.invisible-btn:hover {
+    opacity: 0.3;
+    transform: scale(1.1);
+}
+
+.invisible-btn.unlocked {
+    opacity: 1;
+    background: rgba(40, 167, 69, 0.2);
+    border: 2px solid rgba(40, 167, 69, 0.5);
+    border-radius: 50%;
+}
+
+.invisible-btn.unlocked::after {
+    content: "✓";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #28a745;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Popup Container Styles */
+#popupContainer {
+    background: rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(2px);
+}
+
+#popupContainer iframe {
+    border: none;
+    background: white;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+/* Close button styling */
+#closePopupBtn {
+    transition: all 0.3s ease;
+    font-weight: bold;
+}
+
+#closePopupBtn:hover {
+    background: #c82333 !important;
+    transform: scale(1.1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Instruction text styling */
+#popupContainer::before {
+    content: "Click outside or press ESC to close";
+    position: absolute;
+    top: 10px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    z-index: 10000;
+    pointer-events: none;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}

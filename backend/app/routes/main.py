@@ -652,3 +652,52 @@ def list_chatbots():
     rows = cursor.fetchall()
     conn.close()
     return jsonify([dict(row) for row in rows])
+
+# --- Get chatbot count for user ---
+@main_bp.route('/get_chatbot_count', methods=['GET'])
+def get_chatbot_count():
+    username = request.args.get('username')
+    if not username:
+        return jsonify({"error": "Username required"}), 400
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) as count FROM chatbots WHERE username=?", (username,))
+    result = cursor.fetchone()
+    conn.close()
+    return jsonify({"count": result[0] if result else 0})
+
+# --- Track invisible button clicks ---
+@main_bp.route('/track_invisible_click', methods=['POST'])
+def track_invisible_click():
+    data = request.json
+    username = data.get('username')
+    click_count = data.get('click_count', 1)
+
+    if not username:
+        return jsonify({"error": "Username required"}), 400
+
+    # Store click tracking in database (you might want to add a table for this)
+    # For now, we'll just log it
+    logging.info(f"Invisible button clicked by {username}, count: {click_count}")
+
+    return jsonify({"success": True, "message": "Click tracked"})
+
+# --- Check unlock status ---
+@main_bp.route('/check_unlock_status', methods=['GET'])
+def check_unlock_status():
+    username = request.args.get('username')
+    if not username:
+        return jsonify({"error": "Username required"}), 400
+
+    # Check if user has unlocked features (this could be based on various criteria)
+    # For now, we'll check if they have more than 1 chatbot (indicating they found a way to unlock)
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) as count FROM chatbots WHERE username=?", (username,))
+    result = cursor.fetchone()
+    conn.close()
+
+    # If user has more than 1 chatbot, consider them unlocked
+    is_unlocked = result[0] > 1 if result else False
+
+    return jsonify({"unlocked": is_unlocked})
