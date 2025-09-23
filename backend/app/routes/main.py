@@ -21,6 +21,16 @@ logging.basicConfig(level=logging.INFO)
 
 main_bp = Blueprint('main', __name__)
 
+# --- Status/Health Check ---
+@main_bp.route('/', methods=['GET'])
+def status():
+    """Health check endpoint"""
+    return jsonify({
+        "status": "running",
+        "message": "ChatBot API is running successfully",
+        "version": "1.0.0"
+    })
+
 # Globals
 CONFIG = {}
 worksheets = []
@@ -512,6 +522,7 @@ def chat():
                             doc[key] = value.isoformat()
             all_data[collection] = documents
         data_desc = "MongoDB data"
+
     elif data_source == 'postgresql':
         all_data = {}
         for table in selected_tables:
@@ -596,6 +607,7 @@ def save_chatbot():
             db_host = db_port = db_name = db_username = db_password = None
             mongo_uri = request.form.get('mongo_uri')
             mongo_db_name = request.form.get('mongo_db_name')
+
         else:
             selected_sheets = None
             selected_tables = json.dumps(selected_items)

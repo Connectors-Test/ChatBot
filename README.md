@@ -16,7 +16,7 @@ project-root/
 │   ├── tests/              # Backend tests
 │   ├── requirements.txt    # Python dependencies
 │   ├── config.py           # Flask config
-   └── app.py             # Entry point for Flask
+│   └── app.py             # Entry point for Flask
 │
 │── frontend/               # PHP frontend
 │   ├── public/             # Public assets (CSS, JS, images)
