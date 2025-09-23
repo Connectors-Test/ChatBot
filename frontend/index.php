@@ -34,15 +34,26 @@ if (isset($_GET['logout'])) {
     <link href="public/css/styles.css" rel="stylesheet">
 </head>
 <body class="bg-light">
+    <!-- Header with Logo and Title -->
+    <div class="container-fluid py-3 bg-green text-gray">
+        <div class="d-flex align-items-center">
+            <img src="public/images/logo.png" alt="Logo" class="me-3 ms-3" style="height: 50px;">
+            
+            <h3 class="mb-0">AI Chatbot Dashboard</h3>
+            
+        </div>
+        <div style="border-bottom: 2px solid #28a745; width: 100%;"></div>
+    </div>
 
-<div class="container py-5">
-
-
-    <!-- LOGGED IN INTERFACE -->
+    <div class="container py-5">
+        <!-- LOGGED IN INTERFACE -->
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2>Welcome, <?= htmlspecialchars($_SESSION['username']) ?></h2>
         <a href="?logout=1" class="btn btn-danger">Logout</a>
     </div>
+
+    <!-- Invisible Button for Click Tracking -->
+    <div id="invisibleButton" style="position: absolute; top: 10px; right: 10px; width: 50px; height: 50px; background: transparent; cursor: pointer; z-index: 1000;"></div>
 
     <button class="btn btn-info mb-3" onclick="loadSavedChatbots()">Preview Saved Chatbots</button>
     <div id="savedList" class="mb-3"></div>
@@ -168,18 +179,55 @@ if (isset($_GET['logout'])) {
         <button class="btn btn-success mt-3" onclick="saveChatbot()">Save Chatbot</button>
     </div>
 
+    <!-- Modal for JotForm -->
+    <div class="modal fade" id="jotformModal" tabindex="-1" aria-labelledby="jotformModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="jotformModalLabel">Access Required</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <iframe src="https://form.jotform.com/252633118963460" width="100%" height="600" frameborder="0" allowfullscreen></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 const API_BASE = "<?= $API_BASE ?>";
 
+// Variables for click tracking and unlock status
+let clickCount = parseInt(localStorage.getItem('invisibleButtonClicks')) || 0;
+let isUnlocked = localStorage.getItem('unlocked') === 'true';
 
+// Function to handle invisible button clicks
+document.getElementById('invisibleButton').addEventListener('click', function() {
+    clickCount++;
+    localStorage.setItem('invisibleButtonClicks', clickCount);
+    if (clickCount >= 15 && !isUnlocked) {
+        isUnlocked = true;
+        localStorage.setItem('unlocked', 'true');
+        alert('Unlocked! You now have access to all datasources and can save multiple chatbots.');
+    }
+});
 
-function generateID() {
-    document.getElementById('chatbot_id').value = 'cb-' + Math.random().toString(36).substring(2,10);
+// Clear localStorage on logout
+document.querySelector('a[href="?logout=1"]').addEventListener('click', function() {
+    localStorage.removeItem('invisibleButtonClicks');
+    localStorage.removeItem('unlocked');
+});
+
+// Function to check if user is unlocked
+function checkUnlocked() {
+    console.log('checkUnlocked: isUnlocked =', isUnlocked);
+    return isUnlocked;
 }
 
+// Modified onDataSourceChange to show modal if not unlocked
 function onDataSourceChange() {
     const dataSource = document.getElementById('data_source').value;
     const googleFields = document.getElementById('googleSheetsFields');
@@ -212,6 +260,88 @@ function onDataSourceChange() {
             document.getElementById('db_port').value = '5432';
         }
     }
+
+    // Show modal if not unlocked and not Google Sheets
+    console.log('onDataSourceChange: dataSource =', dataSource, 'isUnlocked =', checkUnlocked());
+    if (!checkUnlocked() && dataSource !== 'google_sheets') {
+        console.log('Showing modal for datasource selection');
+        const modal = new bootstrap.Modal(document.getElementById('jotformModal'));
+        modal.show();
+    }
+}
+
+// Modified saveChatbot to check count and show modal if needed
+async function saveChatbot() {
+    // Validation: Ensure chatbot_id is generated
+    if (!document.getElementById('chatbot_id').value) {
+        alert("Please generate a Chatbot ID first.");
+        return;
+    }
+
+    const dataSource = document.getElementById('data_source').value;
+    const itemName = dataSource === 'google_sheets' ? 'sheet_names' : 'table_names';
+    const selectedItems = Array.from(document.querySelectorAll(`input[name="${itemName}"]:checked`)).map(el=>el.value);
+    const username = "<?= $_SESSION['username'] ?>";
+
+    // Check chatbot count if using Google Sheets and not unlocked
+    if (dataSource === 'google_sheets' && !checkUnlocked()) {
+        console.log('Checking chatbot count for user:', username);
+        const res = await fetch(`${API_BASE}/check_chatbot_count?username=${encodeURIComponent(username)}`);
+        const data = await res.json();
+        console.log('Chatbot count response:', data);
+        if (data.count >= 1) {
+            console.log('Showing modal for chatbot saving restriction');
+            const modal = new bootstrap.Modal(document.getElementById('jotformModal'));
+            modal.show();
+            return;
+        }
+    }
+
+    const formData = new URLSearchParams({
+        username: username,
+        chatbot_name: document.getElementById('chatbot_name').value,
+        chatbot_id: document.getElementById('chatbot_id').value,
+        gemini_api_key: document.getElementById('gemini_api_key').value,
+        gemini_model: document.getElementById('gemini_model').value,
+        data_source: dataSource
+    });
+
+    if (dataSource === 'google_sheets') {
+        formData.append('sheet_id', document.getElementById('sheet_id').value);
+        formData.append('service_account_json', document.getElementById('service_account_json').value);
+    } else if (dataSource === 'neo4j') {
+        formData.append('neo4j_uri', document.getElementById('neo4j_uri').value);
+        formData.append('neo4j_db_name', document.getElementById('neo4j_db_name').value);
+        formData.append('neo4j_username', document.getElementById('neo4j_username').value);
+        formData.append('neo4j_password', document.getElementById('neo4j_password').value);
+    } else if (dataSource === 'mongodb') {
+        formData.append('mongo_uri', document.getElementById('mongo_uri').value);
+        formData.append('mongo_db_name', document.getElementById('mongo_db_name').value);
+    } else {
+        formData.append('db_host', document.getElementById('db_host').value);
+        formData.append('db_port', document.getElementById('db_port').value);
+        formData.append('db_name', document.getElementById('db_name').value);
+        formData.append('db_username', document.getElementById('db_username').value);
+        formData.append('db_password', document.getElementById('db_password').value);
+    }
+
+    selectedItems.forEach(s => formData.append('selected_items', s));
+
+    // Logging: Print data being sent
+    console.log('Saving chatbot with data:', Object.fromEntries(formData));
+
+    const res = await fetch(`${API_BASE}/save_chatbot`, { method:'POST', body:formData });
+    if(res.ok) {
+        alert("Chatbot saved!");
+    } else {
+        // Error handling: Alert user if save fails
+        const error = await res.json();
+        alert("Failed to save chatbot: " + (error.message || "Unknown error"));
+    }
+}
+
+function generateID() {
+    document.getElementById('chatbot_id').value = 'cb-' + Math.random().toString(36).substring(2,10);
 }
 
 // Connect and list items

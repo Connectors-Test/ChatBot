@@ -15,6 +15,7 @@ import secrets
 import string
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
+from config import Config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -125,7 +126,9 @@ def generate_reset_token(length=32):
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
-def send_reset_email(username, reset_token, frontend_url="https://chatbots-frontend.onrender.com"):
+def send_reset_email(username, reset_token, frontend_url=None):
+    if frontend_url is None:
+        frontend_url = Config().FRONTEND_URL
     """Send password reset email using SMTP"""
     try:
         # SMTP configuration
@@ -588,7 +591,7 @@ def save_chatbot():
             selected_tables = None
             selected_collections = None
             db_host = db_port = db_name = db_username = db_password = None
-            mongo_uri = mongo_db_name = mongo_username = mongo_password = None
+            mongo_uri = mongo_db_name = None
         elif data_source == 'neo4j':
             selected_sheets = None
             selected_tables = json.dumps(selected_items)
@@ -599,7 +602,7 @@ def save_chatbot():
             logging.info(f"Saving Neo4j chatbot: db_name={db_name}")
             db_username = request.form.get('neo4j_username')
             db_password = request.form.get('neo4j_password')
-            mongo_uri = mongo_db_name = mongo_username = mongo_password = None
+            mongo_uri = mongo_db_name = None
         elif data_source == 'mongodb':
             selected_sheets = None
             selected_tables = None
@@ -650,6 +653,19 @@ def save_chatbot():
         # Logging: Log exceptions
         logging.error(f"Error saving chatbot: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
+
+# --- Check chatbot count for restrictions ---
+@main_bp.route('/check_chatbot_count', methods=['GET'])
+def check_chatbot_count():
+    username = request.args.get('username')
+    if not username:
+        return jsonify({"error": "Username required"}), 400
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM chatbots WHERE username=? AND data_source='google_sheets'", (username,))
+    count = cursor.fetchone()[0]
+    conn.close()
+    return jsonify({"count": count})
 
 # --- List saved chatbots ---
 @main_bp.route('/list_chatbots', methods=['GET'])
