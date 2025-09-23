@@ -125,7 +125,7 @@ def generate_reset_token(length=32):
     alphabet = string.ascii_letters + string.digits
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
-def send_reset_email(username, reset_token, frontend_url="http://localhost:8000"):
+def send_reset_email(username, reset_token, frontend_url="https://chatbots-frontend.onrender.com"):
     """Send password reset email using SMTP"""
     try:
         # SMTP configuration
