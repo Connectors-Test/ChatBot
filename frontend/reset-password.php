@@ -7,7 +7,7 @@ header("Expires: 0");
 // Include centralized session configuration
 require_once __DIR__ . '/includes/session_config.php';
 
-$API_BASE = getenv('RENDER') ? "https://chatbot-backend.onrender.com" : "http://localhost:5001";
+$API_BASE = getenv('RENDER') ? "https://chatbot-backend-mxra.onrender.com" : "http://localhost:5001";
 
 // Debug: Log session status
 debugSession("Reset Password page");

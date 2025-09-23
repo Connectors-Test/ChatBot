@@ -1,9 +1,9 @@
 RewriteEngine On
 
-# Handle Angular and React Router
+# Handle routing through router.php
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.php [L]
+RewriteRule . /router.php [L]
 
 # Security headers
 <IfModule mod_headers.c>
