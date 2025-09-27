@@ -1,2 +1,8 @@
-- [x] Edit backend/app/services/database_service.py: Remove os.environ['REQUESTS_CA_BUNDLE'] = '' and add insecure=True to sql.connect in fetch_from_databricks method
-- [x] Run backend/tests/test_databricks.py to verify the SSL fix works (test executed without SSL errors, though connection may hang if warehouse not ready; fix applied successfully)
+# TODO: Frontend Dockerfile Update
+
+## Steps:
+- [x] Update docker/frontend.Dockerfile to add Composer installation after the COPY step.
+- [x] Build the frontend Docker image using docker-compose.
+- [x] Run docker-compose up for the frontend service and verify it starts without errors (check http://localhost:8000).
+- [x] Test basic functionality (e.g., load index.php, check routing to login/signup pages).
+- [x] Update this TODO.md to mark completion.
