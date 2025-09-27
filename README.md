@@ -1,41 +1,64 @@
 # ChatBot Project
 
-A full-stack chatbot application that integrates multiple data sources (Google Sheets, MySQL, PostgreSQL, Neo4j, MongoDB) with Google's Gemini AI to provide conversational responses. Built with a Flask backend API and PHP frontend interface.
+A full-stack chatbot application that integrates multiple data sources (Google Sheets, MySQL, PostgreSQL, Neo4j, MongoDB, Oracle, MSSQL, Airtable) with Google's Gemini AI to provide conversational responses. Built with a Flask backend API and PHP frontend interface.
 
 ## Project Structure
 
 ```
 project-root/
-│── backend/                # Flask backend
-│   ├── app/                # Main application code
+│── .gitignore                    # Git ignore file
+│── cookies.txt                   # Cookie data (if applicable)
+│── msodbcsql17.dmg               # MS SQL driver installer
+│── README.md                     # Documentation
+│── render.yaml                   # Render deployment configuration
+│── backend/                      # Flask backend
+│   ├── app.py                    # Entry point for Flask
+│   ├── config.py                 # Flask configuration
+│   ├── requirements.txt          # Python dependencies
+│   ├── test.py                   # Backend tests
+│   ├── app/                      # Main application code
 │   │   ├── __init__.py
-│   │   ├── routes/         # Flask routes
-│   │   ├── models/         # Database models
-│   │   ├── services/       # Business logic
-│   │   └── utils/          # Helpers
-│   ├── tests/              # Backend tests
-│   ├── requirements.txt    # Python dependencies
-│   ├── config.py           # Flask config
-│   └── app.py             # Entry point for Flask
+│   │   ├── routes/               # Flask routes
+│   │   │   ├── __init__.py
+│   │   │   └── main.py           # Main API routes
+│   │   ├── models/               # Database models
+│   │   │   ├── __init__.py
+│   │   │   ├── chatbot.py        # Chatbot model
+│   │   │   └── user.py           # User model
+│   │   ├── services/             # Business logic
+│   │   │   ├── __init__.py
+│   │   │   ├── chatbot_service.py # Chatbot service
+│   │   │   └── database_service.py # Database service
+│   │   └── utils/                # Helpers
+│   │       ├── __init__.py
+│   │       └── helpers.py        # Utility functions
+│   └── tests/                    # Backend tests directory
 │
-│── frontend/               # PHP frontend
-│   ├── public/             # Public assets (CSS, JS, images)
-│   ├── views/              # PHP templates/pages
-│   ├── includes/           # Reusable PHP partials
-│   ├── router.php          # Frontend router (handles routing without redirect loops)
-│   ├── test.php            # Test page to verify server functionality
-│   ├── index.php           # Main application page (requires authentication)
-│   ├── login.php           # Login page
-│   ├── signup.php          # Registration page
-│   └── composer.json       # PHP dependencies
+│── frontend/                     # PHP frontend
+│   ├── composer.json             # PHP dependencies
+│   ├── router.php                # Frontend router (handles routing without redirect loops)
+│   ├── index.php                 # Main application page (requires authentication)
+│   ├── login.php                 # Login page
+│   ├── signup.php                # Registration page
+│   ├── forgot-password.php       # Password reset request page
+│   ├── reset-password.php        # Password reset confirmation page
+│   ├── includes/                 # Reusable PHP partials
+│   │   └── session_config.php    # Session configuration
+│   ├── public/                   # Public assets (CSS, JS, images)
+│   │   ├── css/                  # Stylesheets
+│   │   │   ├── bootstrap.min.css
+│   │   │   ├── login.css
+│   │   │   ├── signup.css
+│   │   │   └── styles.css
+│   │   ├── images/               # Static images
+│   │   │   └── logo.png
+│   │   └── js/                   # JavaScript files
+│   └── views/                    # PHP templates/pages
 │
-│── docker/                 # Docker setup
-│   ├── backend.Dockerfile
-│   ├── frontend.Dockerfile
-│   └── docker-compose.yml
-│
-│── .env                    # Environment variables
-│── README.md               # Documentation
+│── docker/                       # Docker setup
+│   ├── backend.Dockerfile        # Backend Docker configuration
+│   ├── frontend.Dockerfile       # Frontend Docker configuration
+│   └── docker-compose.yml        # Docker Compose configuration
 ```
 
 ## Prerequisites
@@ -85,6 +108,16 @@ project-root/
    # Edit .env.local with your API keys and database settings
    ```
 
+   Key environment variables:
+   - `SECRET_KEY`: Secret key for Flask sessions (change in production)
+   - `DEBUG`: Set to 'true' for development mode
+   - `HOST`: Host to bind the server (default: 0.0.0.0)
+   - `PORT`: Port for the backend (default: 5001)
+   - `CORS_ORIGINS`: Allowed origins for CORS (e.g., frontend URL)
+   - `DATABASE_URL`: Path to SQLite database (default: chatbots.db)
+   - `RENDER`: Set to 'true' if deploying on Render
+   - `FRONTEND_URL`: URL of the frontend application
+
 2. **API Keys**:
    - Get your **Gemini API key** from [Google AI Studio](https://makersuite.google.com/app/apikey)
    - For Google Sheets: Create a service account in [Google Cloud Console](https://console.cloud.google.com/)
@@ -102,9 +135,7 @@ project-root/
 
 2. **Start Frontend**:
    ```bash
-   <!-- cd frontend -->
-   php -S localhost:8000 -t frontend
-   <!-- php -S localhost:8000 router.php -->
+    php -S localhost:8000 -t frontend
    ```
    Frontend will be available at `http://localhost:8000`
 
@@ -135,7 +166,7 @@ After starting both servers, you can verify the setup is working correctly:
    - Enter Chatbot Name
    - Generate or enter a Chatbot ID
    - Add your Gemini API Key
-   - Select Data Source (Google Sheets, MySQL, PostgreSQL, Neo4j, or MongoDB)
+   - Select Data Source (Google Sheets, MySQL, PostgreSQL, Neo4j, MongoDB, Oracle, MSSQL, or Airtable)
    - Configure data source specific settings
 
 4. **Connect** to your data source to list available tables/collections/sheets
@@ -153,40 +184,99 @@ After starting both servers, you can verify the setup is working correctly:
 - **PostgreSQL**: Connect to PostgreSQL databases
 - **Neo4j**: Connect to Neo4j graph databases
 - **MongoDB**: Connect to MongoDB collections
+- **Oracle**: Connect to Oracle databases
+- **MSSQL**: Connect to Microsoft SQL Server databases
+- **Airtable**: Connect to Airtable bases
 
 ## API Endpoints
 
+- `GET /` - Health check endpoint
 - `POST /signup` - User registration
 - `POST /login` - User authentication
+- `POST /forgot-password` - Request password reset
+- `POST /reset-password` - Reset password with token
 - `POST /set_credentials` - Configure data source connection
 - `POST /set_items` - Select tables/collections/sheets
 - `POST /chat` - Send message and get AI response
 - `POST /save_chatbot` - Save chatbot configuration
+- `GET /check_chatbot_count` - Check number of saved chatbots (for restrictions)
 - `GET /list_chatbots` - List saved chatbots for a user
 
 ## Database
 
 The application uses **SQLite** by default for storing user credentials and chatbot configurations. The database file is created automatically as `chatbots.db`.
 
+## How to Obtain Database Credentials
+
+Depending on the data source you choose, you'll need different credentials. Here's how to obtain them:
+
+### Google Sheets
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the Google Sheets API
+4. Create a service account and download the JSON key file
+5. Share your Google Sheet with the service account email
+
+### MySQL / PostgreSQL / Oracle / MSSQL
+1. Contact your database administrator
+2. Request connection details: host, port, database name, username, password
+3. Ensure your IP is whitelisted if necessary
+4. For Oracle: You may need to install Oracle Instant Client
+
+### Neo4j
+1. Access your Neo4j instance (local or cloud)
+2. Get the connection URI (e.g., bolt://localhost:7687)
+3. Obtain username and password from your Neo4j admin
+
+### MongoDB
+1. Get your MongoDB connection URI from MongoDB Atlas or your local setup
+2. Ensure the URI includes authentication credentials
+
+### Airtable
+1. Go to [Airtable](https://airtable.com/)
+2. Create or access your base
+3. Get your API key from Account settings
+4. Note your Base ID from the API documentation
+
 ## Development
 
 ### Backend Structure
 - `backend/app/routes/` - Flask route handlers
-- `backend/app/models/` - Data models
-- `backend/app/services/` - Business logic
+- `backend/app/models/` - Data models (User, Chatbot)
+- `backend/app/services/` - Business logic (Chatbot service, Database service)
 - `backend/app/utils/` - Helper functions
 
 ### Frontend Structure
 - `frontend/router.php` - Main router that handles all requests and prevents redirect loops
-- `frontend/test.php` - Test page to verify server functionality
 - `frontend/index.php` - Main application page (requires authentication)
 - `frontend/login.php` - Login page
 - `frontend/signup.php` - Registration page
-- `frontend/forgot-password.php` - Password reset page
+- `frontend/forgot-password.php` - Password reset request page
 - `frontend/reset-password.php` - Password reset confirmation page
 - `frontend/public/css/` - Stylesheets
 - `frontend/public/images/` - Static images and assets
 - `frontend/includes/` - Reusable PHP components and session management
+
+## Testing
+
+To run the backend tests:
+
+```bash
+cd backend
+python test.py
+```
+
+This will execute unit tests for the backend functionality.
+
+## Deployment
+
+The project includes a `render.yaml` file for easy deployment on Render. Update the configuration as needed for your deployment environment.
+
+For production deployment:
+1. Set `DEBUG=false` in environment variables
+2. Use a strong `SECRET_KEY`
+3. Configure proper CORS origins
+4. Ensure database backups if using external databases
 
 ## Contributing
 
@@ -199,4 +289,3 @@ The application uses **SQLite** by default for storing user credentials and chat
 ## License
 
 This project is licensed under the MIT License.
-

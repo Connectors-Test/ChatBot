@@ -7,6 +7,7 @@ import pymysql
 import psycopg2
 from neo4j import GraphDatabase
 from pymongo import MongoClient
+import oracledb
 import logging
 import smtplib
 from email.mime.text import MIMEText
@@ -16,6 +17,7 @@ import string
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from config import Config
+from app.services.database_service import DatabaseService
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -85,7 +87,12 @@ def init_db():
             selected_tables TEXT,
             mongo_uri TEXT,
             mongo_db_name TEXT,
-            selected_collections TEXT
+            selected_collections TEXT,
+            airtable_api_key TEXT,
+            airtable_base_id TEXT,
+            databricks_hostname TEXT,
+            databricks_http_path TEXT,
+            databricks_token TEXT
         )
     """)
 
@@ -115,6 +122,124 @@ def init_db():
         cursor.execute("ALTER TABLE chatbots ADD COLUMN selected_collections TEXT;")
     except sqlite3.OperationalError:
         pass
+
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN airtable_api_key TEXT;")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN airtable_base_id TEXT;")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_hostname TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_http_path TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_token TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN supabase_url TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN supabase_anon_key TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_account TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_user TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_password TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_warehouse TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_database TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_schema TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_role TEXT;")
+    except sqlite3.OperationalError:
+        pass
+
+    # Add share and styling columns
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN share_key TEXT UNIQUE;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN company_logo TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN nav_color TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN text_color TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN content_bg_color TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN textarea_color TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN textarea_border_color TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN textarea_border_thickness TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN button_color TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN button_text_color TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN border_color TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN border_thickness TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN nav_border_color TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN nav_border_thickness TEXT;")
+    except sqlite3.OperationalError:
+        pass
+
     conn.commit()
     conn.close()
 
@@ -466,6 +591,112 @@ def set_credentials():
         except Exception as e:
             return jsonify({'error': f'MongoDB connection failed: {str(e)}'}), 400
 
+    elif data_source == 'oracle':
+        try:
+            version = int(CONFIG.get('oracle_version', 19))
+            creds = {
+                'host': CONFIG['db_host'],
+                'port': int(CONFIG.get('db_port', 1521)),
+                'user': CONFIG['db_username'],
+                'password': CONFIG['db_password'],
+                'service_name': CONFIG['db_name']
+            }
+            db_service = DatabaseService()
+            # Test connection by fetching table list
+            query = "SELECT table_name FROM all_tables WHERE owner = USER"
+            results = db_service.fetch_from_oracle(creds, query, version)
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'error': results['message']}), 400
+            items = [row['TABLE_NAME'] for row in results]
+            return jsonify({'type': 'tables', 'items': items})
+        except Exception as e:
+            return jsonify({'error': f'Oracle connection failed: {str(e)}'}), 400
+    elif data_source == 'mssql':
+        try:
+            creds = {
+                'host': CONFIG['db_host'],
+                'port': int(CONFIG.get('db_port', 1433)),
+                'user': CONFIG['db_username'],
+                'password': CONFIG['db_password'],
+                'database': CONFIG['db_name']
+            }
+            db_service = DatabaseService()
+            query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
+            results = db_service.fetch_from_mssql(creds, query)
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'error': results['message']}), 400
+            items = [row['TABLE_NAME'] for row in results]
+            return jsonify({'type': 'tables', 'items': items})
+        except Exception as e:
+            return jsonify({'error': f'MS SQL connection failed: {str(e)}'}), 400
+
+    elif data_source == 'airtable':
+        try:
+            from pyairtable import Api
+            api = Api(CONFIG['airtable_api_key'])
+            base = api.base(CONFIG['airtable_base_id'])
+            tables = base.tables()
+            items = [table.name for table in tables]
+            return jsonify({'type': 'tables', 'items': items})
+        except Exception as e:
+            return jsonify({'error': f'Airtable connection failed: {str(e)}'}), 400
+
+    elif data_source == 'databricks':
+        try:
+            creds = {
+                'server_hostname': CONFIG['databricks_hostname'],
+                'http_path': CONFIG['databricks_http_path'],
+                'access_token': CONFIG['databricks_token']
+            }
+            db_service = DatabaseService()
+            query = "SHOW TABLES"
+            results = db_service.fetch_from_databricks(creds, query)
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'error': results['message']}), 400
+            items = [row['tableName'] for row in results]
+            return jsonify({'type': 'tables', 'items': items})
+        except Exception as e:
+            return jsonify({'error': f'Databricks connection failed: {str(e)}'}), 400
+
+    elif data_source == 'supabase':
+        try:
+            import requests
+            # Get the OpenAPI spec to list tables
+            api_url = CONFIG['supabase_url'].rstrip('/') + '/rest/v1/'
+            headers = {
+                'Authorization': f'Bearer {CONFIG["supabase_anon_key"]}',
+                'apikey': CONFIG['supabase_anon_key']
+            }
+            response = requests.get(api_url, headers=headers)
+            if response.status_code == 200:
+                spec = response.json()
+                paths = spec.get('paths', {})
+                items = [path.strip('/') for path in paths.keys() if path.startswith('/') and path != '/']
+            else:
+                items = []
+            return jsonify({'type': 'tables', 'items': items})
+        except Exception as e:
+            return jsonify({'error': f'Supabase connection failed: {str(e)}'}), 400
+    elif data_source == 'snowflake':
+        try:
+            creds = {
+                'account': CONFIG['snowflake_account'],
+                'user': CONFIG['snowflake_user'],
+                'password': CONFIG['snowflake_password'],
+                'warehouse': CONFIG['snowflake_warehouse'],
+                'database': CONFIG['snowflake_database'],
+                'schema': CONFIG['snowflake_schema'],
+                'role': CONFIG.get('snowflake_role')
+            }
+            db_service = DatabaseService()
+            results = db_service.fetch_from_snowflake(creds, query='all')
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'error': results['message']}), 400
+            items = results
+            return jsonify({'type': 'tables', 'items': items})
+        except Exception as e:
+            return jsonify({'error': f'Snowflake connection failed: {str(e)}'}), 400
+
     else:
         return jsonify({'error': 'Invalid data source'}), 400
 
@@ -489,11 +720,60 @@ def set_items():
 @main_bp.route('/chat', methods=['POST'])
 def chat():
     global worksheets, selected_tables, CONFIG, gemini_client, db_conn
+    data = request.json
+    share_key = data.get('share_key')
+    if share_key:
+        # Load config from shared chatbot
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM chatbots WHERE share_key=?", (share_key,))
+        row = cursor.fetchone()
+        conn.close()
+        if not row:
+            return jsonify({'response': 'Chatbot not found'}), 404
+        cb = dict(row)
+        # Set CONFIG from cb
+        CONFIG = {
+            'gemini_api_key': cb['gemini_api_key'],
+            'gemini_model': cb['gemini_model'],
+            'data_source': cb['data_source'],
+            'sheet_id': cb.get('sheet_id'),
+            'service_account_json': cb.get('service_account_json'),
+            'db_host': cb.get('db_host'),
+            'db_port': cb.get('db_port'),
+            'db_name': cb.get('db_name'),
+            'db_username': cb.get('db_username'),
+            'db_password': cb.get('db_password'),
+            'mongo_uri': cb.get('mongo_uri'),
+            'mongo_db_name': cb.get('mongo_db_name'),
+            'airtable_api_key': cb.get('airtable_api_key'),
+            'airtable_base_id': cb.get('airtable_base_id'),
+            'databricks_hostname': cb.get('databricks_hostname'),
+            'databricks_http_path': cb.get('databricks_http_path'),
+            'databricks_token': cb.get('databricks_token'),
+            'supabase_url': cb.get('supabase_url'),
+            'supabase_anon_key': cb.get('supabase_anon_key'),
+            'snowflake_account': cb.get('snowflake_account'),
+            'snowflake_user': cb.get('snowflake_user'),
+            'snowflake_password': cb.get('snowflake_password'),
+            'snowflake_warehouse': cb.get('snowflake_warehouse'),
+            'snowflake_database': cb.get('snowflake_database'),
+            'snowflake_schema': cb.get('snowflake_schema'),
+            'snowflake_role': cb.get('snowflake_role')
+        }
+        selected_tables = json.loads(cb.get('selected_tables') or '[]')
+        worksheets = []  # Reset
+        gemini_client = genai.Client(api_key=CONFIG['gemini_api_key'])
+        # Note: For shared, we assume credentials are set, but for demo, skip full setup
+        db_conn = None  # Would need to set up based on data_source
+
     data_source = CONFIG.get('data_source')
+    user_input = data.get('message')
 
     if data_source == 'google_sheets' and not worksheets:
         return jsonify({'response': 'Select at least one sheet first.'})
-    elif data_source in ['mysql', 'postgresql', 'neo4j', 'mongodb'] and not selected_tables:
+    elif data_source in ['mysql', 'postgresql', 'neo4j', 'mongodb', 'oracle'] and not selected_tables:
         return jsonify({'response': 'Select at least one item first.'})
 
     user_input = request.json.get('message')
@@ -537,6 +817,101 @@ def chat():
             all_data[table] = [dict(zip(columns, row)) for row in rows]
             cursor.close()
         data_desc = "PostgreSQL data"
+    elif data_source == 'oracle':
+        all_data = {}
+        version = int(CONFIG.get('oracle_version', 19))
+        creds = {
+            'host': CONFIG['db_host'],
+            'port': int(CONFIG.get('db_port', 1521)),
+            'user': CONFIG['db_username'],
+            'password': CONFIG['db_password'],
+            'service_name': CONFIG['db_name']
+        }
+        db_service = DatabaseService()
+        for table in selected_tables:
+            query = f"SELECT * FROM {table}"
+            results = db_service.fetch_from_oracle(creds, query, version)
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'response': f'Error fetching from {table}: {results["message"]}'})
+            all_data[table] = results
+        data_desc = "Oracle data"
+    elif data_source == 'mssql':
+        all_data = {}
+        creds = {
+            'host': CONFIG['db_host'],
+            'port': int(CONFIG.get('db_port', 1433)),
+            'user': CONFIG['db_username'],
+            'password': CONFIG['db_password'],
+            'database': CONFIG['db_name']
+        }
+        db_service = DatabaseService()
+        for table in selected_tables:
+            query = f"SELECT * FROM {table}"
+            results = db_service.fetch_from_mssql(creds, query)
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'response': f'Error fetching from {table}: {results["message"]}'})
+            all_data[table] = results
+        data_desc = "MS SQL data"
+    elif data_source == 'airtable':
+        all_data = {}
+        creds = {
+            'api_key': CONFIG['airtable_api_key'],
+            'base_id': CONFIG['airtable_base_id']
+        }
+        db_service = DatabaseService()
+        for table in selected_tables:
+            results = db_service.fetch_from_airtable(creds, table)
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'response': f'Error fetching from {table}: {results["message"]}'})
+            all_data[table] = results
+        data_desc = "Airtable data"
+    elif data_source == 'databricks':
+        all_data = {}
+        creds = {
+            'server_hostname': CONFIG['databricks_hostname'],
+            'http_path': CONFIG['databricks_http_path'],
+            'access_token': CONFIG['databricks_token']
+        }
+        db_service = DatabaseService()
+        for table in selected_tables:
+            query = f"SELECT * FROM {table}"
+            results = db_service.fetch_from_databricks(creds, query)
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'response': f'Error fetching from {table}: {results["message"]}'})
+            all_data[table] = results
+        data_desc = "Databricks data"
+    elif data_source == 'supabase':
+        all_data = {}
+        creds = {
+            'url': CONFIG['supabase_url'],
+            'anon_key': CONFIG['supabase_anon_key']
+        }
+        db_service = DatabaseService()
+        for table in selected_tables:
+            results = db_service.fetch_from_supabase(creds, table)
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'response': f'Error fetching from {table}: {results["message"]}'})
+            all_data[table] = results
+        data_desc = "Supabase data"
+    elif data_source == 'snowflake':
+        all_data = {}
+        creds = {
+            'account': CONFIG['snowflake_account'],
+            'user': CONFIG['snowflake_user'],
+            'password': CONFIG['snowflake_password'],
+            'warehouse': CONFIG['snowflake_warehouse'],
+            'database': CONFIG['snowflake_database'],
+            'schema': CONFIG['snowflake_schema'],
+            'role': CONFIG.get('snowflake_role')
+        }
+        db_service = DatabaseService()
+        for table in selected_tables:
+            query = f"SELECT * FROM {table}"
+            results = db_service.fetch_from_snowflake(creds, query)
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'response': f'Error fetching from {table}: {results["message"]}'})
+            all_data[table] = results
+        data_desc = "Snowflake data"
     else:
         all_data = {}
         for table in selected_tables:
@@ -586,68 +961,148 @@ def save_chatbot():
             conn.close()
             return jsonify({"success": False, "message": "User not found"}), 400
 
+        # Initialize all conditional variables to None
+        selected_sheets = None
+        selected_tables = None
+        selected_collections = None
+        db_host = None
+        db_port = None
+        db_name = None
+        db_username = None
+        db_password = None
+        mongo_uri = None
+        mongo_db_name = None
+        airtable_api_key = None
+        airtable_base_id = None
+        databricks_hostname = None
+        databricks_http_path = None
+        databricks_token = None
+        supabase_url = None
+        supabase_anon_key = None
+        snowflake_account = None
+        snowflake_user = None
+        snowflake_password = None
+        snowflake_warehouse = None
+        snowflake_database = None
+        snowflake_schema = None
+        snowflake_role = None
+
         if data_source == 'google_sheets':
             selected_sheets = json.dumps(selected_items)
-            selected_tables = None
-            selected_collections = None
-            db_host = db_port = db_name = db_username = db_password = None
-            mongo_uri = mongo_db_name = None
         elif data_source == 'neo4j':
-            selected_sheets = None
             selected_tables = json.dumps(selected_items)
-            selected_collections = None
             db_host = request.form.get('neo4j_uri')
             db_port = None
             db_name = request.form.get('neo4j_db_name')
             logging.info(f"Saving Neo4j chatbot: db_name={db_name}")
             db_username = request.form.get('neo4j_username')
             db_password = request.form.get('neo4j_password')
-            mongo_uri = mongo_db_name = None
         elif data_source == 'mongodb':
-            selected_sheets = None
-            selected_tables = None
             selected_collections = json.dumps(selected_items)
-            db_host = db_port = db_name = db_username = db_password = None
             mongo_uri = request.form.get('mongo_uri')
             mongo_db_name = request.form.get('mongo_db_name')
-
-        else:
-            selected_sheets = None
+        elif data_source == 'oracle':
             selected_tables = json.dumps(selected_items)
-            selected_collections = None
             db_host = request.form.get('db_host')
             db_port_str = request.form.get('db_port')
             db_port = int(db_port_str) if db_port_str else None
             db_name = request.form.get('db_name')
             db_username = request.form.get('db_username')
             db_password = request.form.get('db_password')
-            mongo_uri = mongo_db_name = None
+        elif data_source == 'mssql':
+            selected_tables = json.dumps(selected_items)
+            db_host = request.form.get('db_host')
+            db_port_str = request.form.get('db_port')
+            db_port = int(db_port_str) if db_port_str else None
+            db_name = request.form.get('db_name')
+            db_username = request.form.get('db_username')
+            db_password = request.form.get('db_password')
+        elif data_source == 'airtable':
+            selected_tables = json.dumps(selected_items)
+            airtable_api_key = request.form.get('airtable_api_key')
+            airtable_base_id = request.form.get('airtable_base_id')
+        elif data_source == 'databricks':
+            selected_tables = json.dumps(selected_items)
+            databricks_hostname = request.form.get('databricks_hostname')
+            databricks_http_path = request.form.get('databricks_http_path')
+            databricks_token = request.form.get('databricks_token')
+        elif data_source == 'supabase':
+            selected_tables = json.dumps(selected_items)
+            supabase_url = request.form.get('supabase_url')
+            supabase_anon_key = request.form.get('supabase_anon_key')
+        elif data_source == 'snowflake':
+            selected_tables = json.dumps(selected_items)
+            snowflake_account = request.form.get('snowflake_account')
+            snowflake_user = request.form.get('snowflake_user')
+            snowflake_password = request.form.get('snowflake_password')
+            snowflake_warehouse = request.form.get('snowflake_warehouse')
+            snowflake_database = request.form.get('snowflake_database')
+            snowflake_schema = request.form.get('snowflake_schema')
+            snowflake_role = request.form.get('snowflake_role')
+        else:
+            selected_tables = json.dumps(selected_items)
+            db_host = request.form.get('db_host')
+            db_port_str = request.form.get('db_port')
+            db_port = int(db_port_str) if db_port_str else None
+            db_name = request.form.get('db_name')
+            db_username = request.form.get('db_username')
+            db_password = request.form.get('db_password')
 
-        cursor.execute("""
-            INSERT OR REPLACE INTO chatbots (id, username, chatbot_name, gemini_api_key, gemini_model, data_source, sheet_id, selected_sheets, service_account_json, db_host, db_port, db_name, db_username, db_password, selected_tables, mongo_uri, mongo_db_name, selected_collections)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            request.form['chatbot_id'],
-            username,
-            request.form['chatbot_name'],
-            request.form['gemini_api_key'],
-            request.form['gemini_model'],
-            data_source,
-            request.form.get('sheet_id'),
-            selected_sheets,
-            request.form.get('service_account_json'),
-            db_host,
-            db_port,
-            db_name,
-            db_username,
-            db_password,
-            selected_tables,
-            mongo_uri,
-            mongo_db_name,
-            selected_collections
-        ))
-        conn.commit()
-        conn.close()
+        # Generate share_key if not exists
+        share_key = request.form.get('share_key')
+        if not share_key:
+            share_key = secrets.token_urlsafe(16)
+
+        chatbot_data = {
+            'id': request.form['chatbot_id'],
+            'username': username,
+            'chatbot_name': request.form['chatbot_name'],
+            'gemini_api_key': request.form['gemini_api_key'],
+            'gemini_model': request.form['gemini_model'],
+            'data_source': data_source,
+            'sheet_id': request.form.get('sheet_id'),
+            'selected_sheets': selected_sheets,
+            'service_account_json': request.form.get('service_account_json'),
+            'db_host': db_host,
+            'db_port': db_port,
+            'db_name': db_name,
+            'db_username': db_username,
+            'db_password': db_password,
+            'selected_tables': selected_tables,
+            'mongo_uri': mongo_uri,
+            'mongo_db_name': mongo_db_name,
+            'selected_collections': selected_collections,
+            'airtable_api_key': airtable_api_key,
+            'airtable_base_id': airtable_base_id,
+            'databricks_hostname': databricks_hostname,
+            'databricks_http_path': databricks_http_path,
+            'databricks_token': databricks_token,
+            'supabase_url': supabase_url,
+            'supabase_anon_key': supabase_anon_key,
+            'snowflake_account': snowflake_account,
+            'snowflake_user': snowflake_user,
+            'snowflake_password': snowflake_password,
+            'snowflake_warehouse': snowflake_warehouse,
+            'snowflake_database': snowflake_database,
+            'snowflake_schema': snowflake_schema,
+            'snowflake_role': snowflake_role,
+            'share_key': share_key,
+            'company_logo': request.form.get('company_logo'),
+            'nav_color': request.form.get('nav_color'),
+            'text_color': request.form.get('text_color'),
+            'content_bg_color': request.form.get('content_bg_color'),
+            'textarea_color': request.form.get('textarea_color'),
+            'textarea_border_color': request.form.get('textarea_border_color'),
+            'textarea_border_thickness': request.form.get('textarea_border_thickness'),
+            'button_color': request.form.get('button_color'),
+            'button_text_color': request.form.get('button_text_color'),
+            'border_color': request.form.get('border_color'),
+            'border_thickness': request.form.get('border_thickness'),
+            'nav_border_color': request.form.get('nav_border_color'),
+            'nav_border_thickness': request.form.get('nav_border_thickness')
+        }
+        db_service = DatabaseService()
+        db_service.save_chatbot(chatbot_data)
         return jsonify({"success": True})
     except Exception as e:
         # Logging: Log exceptions
@@ -680,3 +1135,110 @@ def list_chatbots():
     rows = cursor.fetchall()
     conn.close()
     return jsonify([dict(row) for row in rows])
+
+# --- Shared Chatbot ---
+@main_bp.route('/shared/<share_key>', methods=['GET'])
+def shared_chatbot(share_key):
+    conn = sqlite3.connect(DB_FILE)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM chatbots WHERE share_key=?", (share_key,))
+    row = cursor.fetchone()
+    conn.close()
+    if not row:
+        return "Chatbot not found", 404
+
+    cb = dict(row)
+    # Apply default styles if not set
+    styles = {
+        'nav_color': cb.get('nav_color', '#007bff'),
+        'text_color': cb.get('text_color', '#000000'),
+        'content_bg_color': cb.get('content_bg_color', '#ffffff'),
+        'textarea_color': cb.get('textarea_color', '#ffffff'),
+        'textarea_border_color': cb.get('textarea_border_color', '#cccccc'),
+        'textarea_border_thickness': cb.get('textarea_border_thickness', '1px'),
+        'button_color': cb.get('button_color', '#007bff'),
+        'button_text_color': cb.get('button_text_color', '#ffffff'),
+        'border_color': cb.get('border_color', '#007bff'),
+        'border_thickness': cb.get('border_thickness', '2px'),
+        'nav_border_color': cb.get('nav_border_color', '#007bff'),
+        'nav_border_thickness': cb.get('nav_border_thickness', '2px'),
+        'company_logo': cb.get('company_logo', '')
+    }
+
+    html = f"""
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>{cb['chatbot_name']}</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <style>
+            body {{
+                background-color: {styles['content_bg_color']};
+                color: {styles['text_color']};
+            }}
+            .navbar {{
+                background-color: {styles['nav_color']} !important;
+                border-bottom: {styles['nav_border_thickness']} solid {styles['nav_border_color']} !important;
+            }}
+            .chat-container {{
+                border: {styles['border_thickness']} solid {styles['border_color']};
+                border-radius: 5px;
+                padding: 20px;
+                margin-top: 20px;
+            }}
+            .form-control {{
+                background-color: {styles['textarea_color']} !important;
+                border-color: {styles['textarea_border_color']} !important;
+                border-width: {styles['textarea_border_thickness']} !important;
+            }}
+            .btn-primary {{
+                background-color: {styles['button_color']} !important;
+                border-color: {styles['button_color']} !important;
+                color: {styles['button_text_color']} !important;
+            }}
+        </style>
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg">
+            <div class="container">
+                {f'<img src="{styles["company_logo"]}" alt="Logo" style="height: 40px; margin-right: 10px;">' if styles['company_logo'] else ''}
+                <span class="navbar-brand">{cb['chatbot_name']}</span>
+            </div>
+        </nav>
+        <div class="container">
+            <div class="chat-container">
+                <h4>Chat with {cb['chatbot_name']}</h4>
+                <div id="chat" class="mb-3" style="height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px;"></div>
+                <div class="input-group">
+                    <input type="text" id="user_input" class="form-control" placeholder="Ask about your data...">
+                    <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+        <script>
+            const API_BASE = "{Config().FRONTEND_URL or 'http://localhost:5001'}";
+            const chatbot_id = "{cb['id']}";
+
+            async function sendMessage() {{
+                const input = document.getElementById('user_input').value;
+                if(!input) return;
+                const chatDiv = document.getElementById('chat');
+                chatDiv.innerHTML += `<p class="user"><b>You:</b> ${{input}}</p>`;
+
+                const res = await fetch(`${{API_BASE}}/chat`, {{
+                    method:'POST',
+                    headers:{{'Content-Type':'application/json'}},
+                    body: JSON.stringify({{message: input, share_key: '{share_key}'}})
+                }});
+                const data = await res.json();
+                chatDiv.innerHTML += `<p class="bot"><b>Bot:</b> ${{data.response}}</p>`;
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+                document.getElementById('user_input').value = '';
+            }}
+        </script>
+    </body>
+    </html>
+    """
+    return html

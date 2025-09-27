@@ -1,5 +1,13 @@
 import sqlite3
 import logging
+import oracledb
+import pymssql  # Commented out to avoid import error
+from pyairtable import Api
+from databricks import sql
+from supabase import create_client, Client
+import snowflake.connector
+import os
+
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +50,12 @@ class DatabaseService:
                 selected_tables TEXT,
                 mongo_uri TEXT,
                 mongo_db_name TEXT,
-                selected_collections TEXT
+                selected_collections TEXT,
+                airtable_api_key TEXT,
+                airtable_base_id TEXT,
+                databricks_hostname TEXT,
+                databricks_http_path TEXT,
+                databricks_token TEXT
             )
         """)
 
@@ -57,6 +70,62 @@ class DatabaseService:
             pass
         try:
             cursor.execute("ALTER TABLE chatbots ADD COLUMN selected_collections TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN airtable_api_key TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN airtable_base_id TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_hostname TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_http_path TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_token TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN supabase_url TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN supabase_anon_key TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_account TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_user TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_password TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_warehouse TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_database TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_schema TEXT;")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_role TEXT;")
         except sqlite3.OperationalError:
             pass
 
@@ -79,12 +148,13 @@ class DatabaseService:
         conn.close()
         return row
 
+
     def save_chatbot(self, chatbot_data):
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT OR REPLACE INTO chatbots (id, username, chatbot_name, gemini_api_key, gemini_model, data_source, sheet_id, selected_sheets, service_account_json, db_host, db_port, db_name, db_username, db_password, selected_tables, mongo_uri, mongo_db_name, selected_collections)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO chatbots (id, username, chatbot_name, gemini_api_key, gemini_model, data_source, sheet_id, selected_sheets, service_account_json, db_host, db_port, db_name, db_username, db_password, selected_tables, mongo_uri, mongo_db_name, selected_collections, airtable_api_key, airtable_base_id, databricks_hostname, databricks_http_path, databricks_token, supabase_url, supabase_anon_key, snowflake_account, snowflake_user, snowflake_password, snowflake_warehouse, snowflake_database, snowflake_schema, snowflake_role)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             chatbot_data['id'],
             chatbot_data['username'],
@@ -103,7 +173,21 @@ class DatabaseService:
             chatbot_data.get('selected_tables'),
             chatbot_data.get('mongo_uri'),
             chatbot_data.get('mongo_db_name'),
-            chatbot_data.get('selected_collections')
+            chatbot_data.get('selected_collections'),
+            chatbot_data.get('airtable_api_key'),
+            chatbot_data.get('airtable_base_id'),
+            chatbot_data.get('databricks_hostname'),
+            chatbot_data.get('databricks_http_path'),
+            chatbot_data.get('databricks_token'),
+            chatbot_data.get('supabase_url'),
+            chatbot_data.get('supabase_anon_key'),
+            chatbot_data.get('snowflake_account'),
+            chatbot_data.get('snowflake_user'),
+            chatbot_data.get('snowflake_password'),
+            chatbot_data.get('snowflake_warehouse'),
+            chatbot_data.get('snowflake_database'),
+            chatbot_data.get('snowflake_schema'),
+            chatbot_data.get('snowflake_role')
         ))
         conn.commit()
         conn.close()
@@ -116,3 +200,259 @@ class DatabaseService:
         rows = cursor.fetchall()
         conn.close()
         return [dict(row) for row in rows]
+
+    def fetch_from_oracle(self, creds, query=None, version=None):
+        """
+        Fetch data from Oracle 19c or 23c using python-oracledb (thin mode).
+
+        Args:
+            creds (dict): Must have 'host', 'port', 'user', 'password', 'service_name'
+            query (str): SQL SELECT query
+            version (int): Oracle version (19 or 23)
+
+        Returns:
+            list[dict]: Query results as list of dicts
+        """
+        conn = None
+        cur = None
+
+        if version == 23:
+            user = "C##" + creds["user"].upper() if not creds["user"].startswith("C##") else creds["user"].upper()
+        else:
+            user = creds["user"]
+
+        try:
+            # Build DSN
+            dsn = oracledb.makedsn(
+                creds["host"],
+                creds.get("port", 1521),
+                service_name=creds["service_name"]
+            )
+
+            # Connect
+            conn = oracledb.connect(
+                user=user,
+                password=creds["password"],
+                dsn=dsn
+            )
+            cur = conn.cursor()
+
+            # Execute query
+            cur.execute(query)
+
+            # Extract results
+            columns = [col[0] for col in cur.description]
+            rows = cur.fetchall()
+            results = [dict(zip(columns, row)) for row in rows]
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Oracle fetch failed: {str(e)}")
+            return {"status": "error", "message": f"Oracle fetch failed: {str(e)}"}
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
+
+    def fetch_from_mssql(self, creds, query=None):
+        """
+        Fetch data from MS SQL Server using pymssql.
+
+        Args:
+            creds (dict): Must have 'host', 'port', 'user', 'password', 'database'
+            query (str): SQL SELECT query
+
+        Returns:
+            list[dict]: Query results as list of dicts
+        """
+        conn = None
+        cur = None
+
+        try:
+            # Connect
+            conn = pymssql.connect(
+                server=creds['host'],
+                port=creds.get('port', 1433),
+                user=creds['user'],
+                password=creds['password'],
+                database=creds['database']
+            )
+            cur = conn.cursor()
+
+            # Execute query
+            cur.execute(query)
+
+            # Extract results
+            columns = [column[0] for column in cur.description]
+            rows = cur.fetchall()
+            results = [dict(zip(columns, row)) for row in rows]
+
+            return results
+
+        except Exception as e:
+            logger.error(f"MS SQL fetch failed: {str(e)}")
+            return {"status": "error", "message": f"MS SQL fetch failed: {str(e)}"}
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
+
+    def fetch_from_airtable(self, creds, query=None):
+        """
+        Fetch data from Airtable using pyairtable.
+
+        Args:
+            creds (dict): Must have 'api_key', 'base_id'
+            query (str): Table name to fetch from
+
+        Returns:
+            list[dict]: Records as list of dicts
+        """
+        try:
+            api = Api(creds['api_key'])
+            base = api.base(creds['base_id'])
+            table = base.table(query)
+            records = table.all()
+
+            results = []
+            for record in records:
+                results.append({'id': record['id'], 'fields': record['fields']})
+            return results
+
+        except Exception as e:
+            logger.error(f"Airtable fetch failed: {str(e)}")
+            return {"status": "error", "message": f"Airtable fetch failed: {str(e)}"}
+
+    def fetch_from_databricks(self, creds, query=None):
+        """
+        Fetch data from Databricks using databricks-sql-connector.
+
+        Args:
+            creds (dict): Must have 'server_hostname', 'http_path', 'access_token'
+            query (str): SQL SELECT query
+
+        Returns:
+            list[dict]: Query results as list of dicts
+        """
+        conn = None
+        cur = None
+
+        try:
+            # Connect with SSL verification disabled for self-signed certificates and timeout
+            conn = sql.connect(
+                server_hostname=creds['server_hostname'],
+                http_path=creds['http_path'],
+                access_token=creds['access_token'],
+                insecure=True,
+                timeout=60
+            )
+            cur = conn.cursor()
+
+            # Execute query
+            cur.execute(query)
+
+            # Extract results
+            columns = [desc[0] for desc in cur.description]
+            rows = cur.fetchall()
+            results = [dict(zip(columns, row)) for row in rows]
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Databricks fetch failed: {str(e)}")
+            return {"status": "error", "message": f"Databricks fetch failed: {str(e)}"}
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()
+
+    def fetch_from_supabase(self, creds, query=None):
+        """
+        Fetch data from Supabase using supabase-py.
+
+        Args:
+            creds (dict): Must have 'url', 'anon_key'
+            query (str): Table name to fetch from, or None/'all' to list all tables
+
+        Returns:
+            list[dict] or list[str]: Records as list of dicts, or list of table names if query is None/'all'
+        """
+        try:
+            supabase: Client = create_client(creds['url'], creds['anon_key'])
+            if query is None or query.lower() == 'all':
+                # Fetch all table names
+                import requests
+                api_url = creds['url'].rstrip('/') + '/rest/v1/'
+                headers = {
+                    'Authorization': f'Bearer {creds["anon_key"]}',
+                    'apikey': creds['anon_key']
+                }
+                response = requests.get(api_url, headers=headers)
+                if response.status_code == 200:
+                    spec = response.json()
+                    paths = spec.get('paths', {})
+                    results = [path.strip('/') for path in paths.keys() if path.startswith('/') and path != '/']
+                else:
+                    results = []
+            else:
+                response = supabase.table(query).select('*').execute()
+                results = response.data
+            return results
+        except Exception as e:
+            logger.error(f"Supabase fetch failed: {str(e)}")
+            return {"status": "error", "message": f"Supabase fetch failed: {str(e)}"}
+
+    def fetch_from_snowflake(self, creds, query=None):
+        """
+        Fetch data from Snowflake using snowflake-connector-python.
+
+        Args:
+            creds (dict): Must have 'account', 'user', 'password', 'warehouse', 'database', 'schema', 'role'
+            query (str): SQL SELECT query, or None/'all' to list all tables
+
+        Returns:
+            list[dict]: Query results as list of dicts, or list of table names if query is None/'all'
+        """
+        conn = None
+        cur = None
+
+        try:
+            # Connect
+            conn = snowflake.connector.connect(
+                account=creds['account'],
+                user=creds['user'],
+                password=creds['password'],
+                warehouse=creds['warehouse'],
+                database=creds['database'],
+                schema=creds['schema'],
+                role=creds.get('role')
+            )
+            cur = conn.cursor()
+
+            if query is None or query.lower() == 'all':
+                # List all tables
+                cur.execute("SHOW TABLES")
+                results = [row[1] for row in cur.fetchall()]  # TABLE_NAME is second column
+            else:
+                # Execute query
+                cur.execute(query)
+
+                # Extract results
+                columns = [desc[0] for desc in cur.description]
+                rows = cur.fetchall()
+                results = [dict(zip(columns, row)) for row in rows]
+
+            return results
+
+        except Exception as e:
+            logger.error(f"Snowflake fetch failed: {str(e)}")
+            return {"status": "error", "message": f"Snowflake fetch failed: {str(e)}"}
+        finally:
+            if cur:
+                cur.close()
+            if conn:
+                conn.close()

@@ -17,7 +17,8 @@ $public_routes = [
     'login.php',
     'signup.php',
     'forgot-password.php',
-    'reset-password.php'
+    'reset-password.php',
+    'favicon.ico'
 ];
 
 // Check if this is a public route

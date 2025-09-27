@@ -90,75 +90,202 @@ if (isset($_GET['logout'])) {
                 <option value="google_sheets" selected>Google Sheets</option>
                 <option value="mysql">MySQL</option>
                 <option value="postgresql">PostgreSQL</option>
+                <option value="mssql">MS SQL</option>
                 <option value="neo4j">Neo4j</option>
-                <option value="mongodb">MongoDB</option>
+            <option value="mongodb">MongoDB</option>
+            <option value="oracle">Oracle</option>
+            <option value="airtable">Airtable</option>
+            <option value="databricks">Databricks</option>
+                <option value="supabase">Supabase</option>
+                <option value="snowflake">Snowflake</option>
+        </select>
+    </div>
+
+    <div id="googleSheetsFields">
+        <div class="mb-3">
+            <label for="sheet_id">Google Spreadsheet ID</label>
+            <input type="text" class="form-control" id="sheet_id">
+        </div>
+
+        <div class="mb-3">
+            <label for="service_account_json">Service Account JSON</label>
+            <textarea class="form-control" id="service_account_json" rows="5"></textarea>
+        </div>
+    </div>
+
+    <div id="dbFields" style="display:none;">
+        <div class="mb-3">
+            <label for="db_host">Database Host</label>
+            <input type="text" class="form-control" id="db_host">
+        </div>
+        <div class="mb-3">
+            <label for="db_port">Database Port</label>
+            <input type="number" class="form-control" id="db_port" value="3306">
+        </div>
+        <div class="mb-3">
+            <label for="db_name">Database Name</label>
+            <input type="text" class="form-control" id="db_name">
+        </div>
+        <div class="mb-3">
+            <label for="db_username">Database Username</label>
+            <input type="text" class="form-control" id="db_username">
+        </div>
+        <div class="mb-3">
+            <label for="db_password">Database Password</label>
+            <input type="password" class="form-control" id="db_password">
+        </div>
+    </div>
+
+    <div id="mssqlFields" style="display:none;">
+        <div class="mb-3">
+            <label for="db_host">Database Host</label>
+            <input type="text" class="form-control" id="mssql_host">
+        </div>
+        <div class="mb-3">
+            <label for="db_port">Database Port</label>
+            <input type="number" class="form-control" id="mssql_port" value="1433">
+        </div>
+        <div class="mb-3">
+            <label for="db_name">Database Name</label>
+            <input type="text" class="form-control" id="mssql_name">
+        </div>
+        <div class="mb-3">
+            <label for="db_username">Database Username</label>
+            <input type="text" class="form-control" id="mssql_username">
+        </div>
+        <div class="mb-3">
+            <label for="db_password">Database Password</label>
+            <input type="password" class="form-control" id="mssql_password">
+        </div>
+    </div>
+
+    <div id="neo4jFields" style="display:none;">
+        <div class="mb-3">
+            <label for="neo4j_uri">Neo4j URI</label>
+            <input type="text" class="form-control" id="neo4j_uri">
+        </div>
+        <div class="mb-3">
+            <label for="neo4j_db_name">Database Name</label>
+            <input type="text" class="form-control" id="neo4j_db_name">
+        </div>
+        <div class="mb-3">
+            <label for="neo4j_username">Neo4j Username</label>
+            <input type="text" class="form-control" id="neo4j_username">
+        </div>
+        <div class="mb-3">
+            <label for="neo4j_password">Neo4j Password</label>
+            <input type="password" class="form-control" id="neo4j_password">
+        </div>
+    </div>
+
+    <div id="mongodbFields" style="display:none;">
+        <div class="mb-3">
+            <label for="mongo_uri">MongoDB URI</label>
+            <input type="text" class="form-control" id="mongo_uri" placeholder="mongodb://localhost:27017">
+        </div>
+        <div class="mb-3">
+            <label for="mongo_db_name">Database Name</label>
+            <input type="text" class="form-control" id="mongo_db_name">
+        </div>
+    </div>
+
+    <div id="oracleFields" style="display:none;">
+        <div class="mb-3">
+            <label for="oracle_version">Oracle Version</label>
+            <select class="form-select" id="oracle_version">
+                <option value="19">Oracle 19c</option>
+                <option value="23">Oracle 23c</option>
             </select>
         </div>
-
-        <div id="googleSheetsFields">
-            <div class="mb-3">
-                <label for="sheet_id">Google Spreadsheet ID</label>
-                <input type="text" class="form-control" id="sheet_id">
-            </div>
-
-            <div class="mb-3">
-                <label for="service_account_json">Service Account JSON</label>
-                <textarea class="form-control" id="service_account_json" rows="5"></textarea>
-            </div>
+        <div class="mb-3">
+            <label for="db_host">Database Host</label>
+            <input type="text" class="form-control" id="db_host">
         </div>
-
-        <div id="dbFields" style="display:none;">
-            <div class="mb-3">
-                <label for="db_host">Database Host</label>
-                <input type="text" class="form-control" id="db_host">
-            </div>
-            <div class="mb-3">
-                <label for="db_port">Database Port</label>
-                <input type="number" class="form-control" id="db_port" value="3306">
-            </div>
-            <div class="mb-3">
-                <label for="db_name">Database Name</label>
-                <input type="text" class="form-control" id="db_name">
-            </div>
-            <div class="mb-3">
-                <label for="db_username">Database Username</label>
-                <input type="text" class="form-control" id="db_username">
-            </div>
-            <div class="mb-3">
-                <label for="db_password">Database Password</label>
-                <input type="password" class="form-control" id="db_password">
-            </div>
+        <div class="mb-3">
+            <label for="db_port">Database Port</label>
+            <input type="number" class="form-control" id="db_port" value="1521">
         </div>
-
-        <div id="neo4jFields" style="display:none;">
-            <div class="mb-3">
-                <label for="neo4j_uri">Neo4j URI</label>
-                <input type="text" class="form-control" id="neo4j_uri">
-            </div>
-            <div class="mb-3">
-                <label for="neo4j_db_name">Database Name</label>
-                <input type="text" class="form-control" id="neo4j_db_name">
-            </div>
-            <div class="mb-3">
-                <label for="neo4j_username">Neo4j Username</label>
-                <input type="text" class="form-control" id="neo4j_username">
-            </div>
-            <div class="mb-3">
-                <label for="neo4j_password">Neo4j Password</label>
-                <input type="password" class="form-control" id="neo4j_password">
-            </div>
+        <div class="mb-3">
+            <label for="db_name">Service Name</label>
+            <input type="text" class="form-control" id="db_name">
         </div>
-
-        <div id="mongodbFields" style="display:none;">
-            <div class="mb-3">
-                <label for="mongo_uri">MongoDB URI</label>
-                <input type="text" class="form-control" id="mongo_uri" placeholder="mongodb://localhost:27017">
-            </div>
-            <div class="mb-3">
-                <label for="mongo_db_name">Database Name</label>
-                <input type="text" class="form-control" id="mongo_db_name">
-            </div>
+        <div class="mb-3">
+            <label for="db_username">Database Username</label>
+            <input type="text" class="form-control" id="db_username">
         </div>
+        <div class="mb-3">
+            <label for="db_password">Database Password</label>
+            <input type="password" class="form-control" id="db_password">
+        </div>
+    </div>
+
+    <div id="airtableFields" style="display:none;">
+        <div class="mb-3">
+            <label for="airtable_api_key">Airtable API Key</label>
+            <input type="text" class="form-control" id="airtable_api_key" placeholder="keyXXXXXXXXXXXXXX">
+        </div>
+        <div class="mb-3">
+            <label for="airtable_base_id">Airtable Base ID</label>
+            <input type="text" class="form-control" id="airtable_base_id" placeholder="appXXXXXXXXXXXXXX">
+        </div>
+    </div>
+
+    <div id="databricksFields" style="display:none;">
+        <div class="mb-3">
+            <label for="databricks_hostname">Databricks Server Hostname</label>
+            <input type="text" class="form-control" id="databricks_hostname" placeholder="adb-1234567890123456.7.azuredatabricks.net">
+        </div>
+        <div class="mb-3">
+            <label for="databricks_http_path">HTTP Path</label>
+            <input type="text" class="form-control" id="databricks_http_path" placeholder="sql/protocolv1/o/1234567890123456/1234-567890-abcdef12">
+        </div>
+        <div class="mb-3">
+            <label for="databricks_token">Access Token</label>
+            <input type="password" class="form-control" id="databricks_token" placeholder="dapi-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
+        </div>
+    </div>
+
+    <div id="supabaseFields" style="display:none;">
+        <div class="mb-3">
+            <label for="supabase_url">Supabase URL</label>
+            <input type="text" class="form-control" id="supabase_url" placeholder="https://your-project.supabase.co">
+        </div>
+        <div class="mb-3">
+            <label for="supabase_anon_key">Supabase Anon Key</label>
+            <input type="password" class="form-control" id="supabase_anon_key" placeholder="your-anon-key">
+        </div>
+    </div>
+
+    <div id="snowflakeFields" style="display:none;">
+        <div class="mb-3">
+            <label for="snowflake_account">Snowflake Account</label>
+            <input type="text" class="form-control" id="snowflake_account" placeholder="your-account.snowflakecomputing.com">
+        </div>
+        <div class="mb-3">
+            <label for="snowflake_user">Snowflake User</label>
+            <input type="text" class="form-control" id="snowflake_user">
+        </div>
+        <div class="mb-3">
+            <label for="snowflake_password">Snowflake Password</label>
+            <input type="password" class="form-control" id="snowflake_password">
+        </div>
+        <div class="mb-3">
+            <label for="snowflake_warehouse">Warehouse</label>
+            <input type="text" class="form-control" id="snowflake_warehouse">
+        </div>
+        <div class="mb-3">
+            <label for="snowflake_database">Database</label>
+            <input type="text" class="form-control" id="snowflake_database">
+        </div>
+        <div class="mb-3">
+            <label for="snowflake_schema">Schema</label>
+            <input type="text" class="form-control" id="snowflake_schema">
+        </div>
+        <div class="mb-3">
+            <label for="snowflake_role">Role (optional)</label>
+            <input type="text" class="form-control" id="snowflake_role">
+        </div>
+    </div>
 
         <button type="button" class="btn btn-primary mb-3" onclick="connectSpreadsheet()">Connect</button>
     </form>
@@ -232,28 +359,117 @@ function onDataSourceChange() {
     const dataSource = document.getElementById('data_source').value;
     const googleFields = document.getElementById('googleSheetsFields');
     const dbFields = document.getElementById('dbFields');
+    const mssqlFields = document.getElementById('mssqlFields');
     const neo4jFields = document.getElementById('neo4jFields');
     const mongodbFields = document.getElementById('mongodbFields');
+    const oracleFields = document.getElementById('oracleFields');
+    const airtableFields = document.getElementById('airtableFields');
+    const databricksFields = document.getElementById('databricksFields');
+    const supabaseFields = document.getElementById('supabaseFields');
+    const snowflakeFields = document.getElementById('snowflakeFields');
     if (dataSource === 'google_sheets') {
         googleFields.style.display = 'block';
         dbFields.style.display = 'none';
+        mssqlFields.style.display = 'none';
         neo4jFields.style.display = 'none';
         mongodbFields.style.display = 'none';
+        oracleFields.style.display = 'none';
+        airtableFields.style.display = 'none';
+        supabaseFields.style.display = 'none';
+        snowflakeFields.style.display = 'none';
+    } else if (dataSource === 'mssql') {
+        googleFields.style.display = 'none';
+        dbFields.style.display = 'none';
+        mssqlFields.style.display = 'block';
+        neo4jFields.style.display = 'none';
+        mongodbFields.style.display = 'none';
+        oracleFields.style.display = 'none';
+        airtableFields.style.display = 'none';
+        supabaseFields.style.display = 'none';
+        snowflakeFields.style.display = 'none';
     } else if (dataSource === 'neo4j') {
         googleFields.style.display = 'none';
         dbFields.style.display = 'none';
+        mssqlFields.style.display = 'none';
         neo4jFields.style.display = 'block';
         mongodbFields.style.display = 'none';
+        oracleFields.style.display = 'none';
+        airtableFields.style.display = 'none';
+        supabaseFields.style.display = 'none';
+        snowflakeFields.style.display = 'none';
     } else if (dataSource === 'mongodb') {
         googleFields.style.display = 'none';
         dbFields.style.display = 'none';
+        mssqlFields.style.display = 'none';
         neo4jFields.style.display = 'none';
         mongodbFields.style.display = 'block';
+        oracleFields.style.display = 'none';
+        airtableFields.style.display = 'none';
+        supabaseFields.style.display = 'none';
+        snowflakeFields.style.display = 'none';
+    } else if (dataSource === 'oracle') {
+        googleFields.style.display = 'none';
+        dbFields.style.display = 'none';
+        mssqlFields.style.display = 'none';
+        neo4jFields.style.display = 'none';
+        mongodbFields.style.display = 'none';
+        oracleFields.style.display = 'block';
+        airtableFields.style.display = 'none';
+        supabaseFields.style.display = 'none';
+        snowflakeFields.style.display = 'none';
+    } else if (dataSource === 'airtable') {
+        googleFields.style.display = 'none';
+        dbFields.style.display = 'none';
+        mssqlFields.style.display = 'none';
+        neo4jFields.style.display = 'none';
+        mongodbFields.style.display = 'none';
+        oracleFields.style.display = 'none';
+        airtableFields.style.display = 'block';
+        supabaseFields.style.display = 'none';
+        snowflakeFields.style.display = 'none';
+    } else if (dataSource === 'databricks') {
+        googleFields.style.display = 'none';
+        dbFields.style.display = 'none';
+        mssqlFields.style.display = 'none';
+        neo4jFields.style.display = 'none';
+        mongodbFields.style.display = 'none';
+        oracleFields.style.display = 'none';
+        airtableFields.style.display = 'none';
+        databricksFields.style.display = 'block';
+        supabaseFields.style.display = 'none';
+        snowflakeFields.style.display = 'none';
+    } else if (dataSource === 'supabase') {
+        googleFields.style.display = 'none';
+        dbFields.style.display = 'none';
+        mssqlFields.style.display = 'none';
+        neo4jFields.style.display = 'none';
+        mongodbFields.style.display = 'none';
+        oracleFields.style.display = 'none';
+        airtableFields.style.display = 'none';
+        databricksFields.style.display = 'none';
+        supabaseFields.style.display = 'block';
+        snowflakeFields.style.display = 'none';
+    } else if (dataSource === 'snowflake') {
+        googleFields.style.display = 'none';
+        dbFields.style.display = 'none';
+        mssqlFields.style.display = 'none';
+        neo4jFields.style.display = 'none';
+        mongodbFields.style.display = 'none';
+        oracleFields.style.display = 'none';
+        airtableFields.style.display = 'none';
+        databricksFields.style.display = 'none';
+        supabaseFields.style.display = 'none';
+        snowflakeFields.style.display = 'block';
     } else {
         googleFields.style.display = 'none';
         dbFields.style.display = 'block';
+        mssqlFields.style.display = 'none';
         neo4jFields.style.display = 'none';
         mongodbFields.style.display = 'none';
+        oracleFields.style.display = 'none';
+        airtableFields.style.display = 'none';
+        supabaseFields.style.display = 'none';
+        snowflakeFields.style.display = 'none';
         if (dataSource === 'mysql') {
             document.getElementById('db_port').value = '3306';
         } else if (dataSource === 'postgresql') {
@@ -317,6 +533,37 @@ async function saveChatbot() {
     } else if (dataSource === 'mongodb') {
         formData.append('mongo_uri', document.getElementById('mongo_uri').value);
         formData.append('mongo_db_name', document.getElementById('mongo_db_name').value);
+    } else if (dataSource === 'mssql') {
+        formData.append('db_host', document.getElementById('mssql_host').value);
+        formData.append('db_port', document.getElementById('mssql_port').value);
+        formData.append('db_name', document.getElementById('mssql_name').value);
+        formData.append('db_username', document.getElementById('mssql_username').value);
+        formData.append('db_password', document.getElementById('mssql_password').value);
+    } else if (dataSource === 'oracle') {
+        formData.append('oracle_version', document.getElementById('oracle_version').value);
+        formData.append('db_host', document.getElementById('db_host').value);
+        formData.append('db_port', document.getElementById('db_port').value);
+        formData.append('db_name', document.getElementById('db_name').value);
+        formData.append('db_username', document.getElementById('db_username').value);
+        formData.append('db_password', document.getElementById('db_password').value);
+    } else if (dataSource === 'airtable') {
+        formData.append('airtable_api_key', document.getElementById('airtable_api_key').value);
+        formData.append('airtable_base_id', document.getElementById('airtable_base_id').value);
+    } else if (dataSource === 'databricks') {
+        formData.append('databricks_hostname', document.getElementById('databricks_hostname').value);
+        formData.append('databricks_http_path', document.getElementById('databricks_http_path').value);
+        formData.append('databricks_token', document.getElementById('databricks_token').value);
+    } else if (dataSource === 'supabase') {
+        formData.append('supabase_url', document.getElementById('supabase_url').value);
+        formData.append('supabase_anon_key', document.getElementById('supabase_anon_key').value);
+    } else if (dataSource === 'snowflake') {
+        formData.append('snowflake_account', document.getElementById('snowflake_account').value);
+        formData.append('snowflake_user', document.getElementById('snowflake_user').value);
+        formData.append('snowflake_password', document.getElementById('snowflake_password').value);
+        formData.append('snowflake_warehouse', document.getElementById('snowflake_warehouse').value);
+        formData.append('snowflake_database', document.getElementById('snowflake_database').value);
+        formData.append('snowflake_schema', document.getElementById('snowflake_schema').value);
+        formData.append('snowflake_role', document.getElementById('snowflake_role').value);
     } else {
         formData.append('db_host', document.getElementById('db_host').value);
         formData.append('db_port', document.getElementById('db_port').value);
@@ -330,7 +577,7 @@ async function saveChatbot() {
     // Logging: Print data being sent
     console.log('Saving chatbot with data:', Object.fromEntries(formData));
 
-    const res = await fetch(`${API_BASE}/save_chatbot`, { method:'POST', body:formData });
+    const res = await fetch(`${API_BASE}/save_chatbot`, { method:'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body:formData });
     if(res.ok) {
         alert("Chatbot saved!");
     } else {
@@ -364,9 +611,33 @@ async function connectSpreadsheet() {
         data.append('neo4j_db_name', document.getElementById('neo4j_db_name').value);
         data.append('neo4j_username', document.getElementById('neo4j_username').value);
         data.append('neo4j_password', document.getElementById('neo4j_password').value);
+    } else if (dataSource === 'mssql') {
+        data.append('db_host', document.getElementById('mssql_host').value);
+        data.append('db_port', document.getElementById('mssql_port').value);
+        data.append('db_name', document.getElementById('mssql_name').value);
+        data.append('db_username', document.getElementById('mssql_username').value);
+        data.append('db_password', document.getElementById('mssql_password').value);
     } else if (dataSource === 'mongodb') {
         data.append('mongo_uri', document.getElementById('mongo_uri').value);
         data.append('mongo_db_name', document.getElementById('mongo_db_name').value);
+    } else if (dataSource === 'airtable') {
+        data.append('airtable_api_key', document.getElementById('airtable_api_key').value);
+        data.append('airtable_base_id', document.getElementById('airtable_base_id').value);
+    } else if (dataSource === 'databricks') {
+        data.append('databricks_hostname', document.getElementById('databricks_hostname').value);
+        data.append('databricks_http_path', document.getElementById('databricks_http_path').value);
+        data.append('databricks_token', document.getElementById('databricks_token').value);
+    } else if (dataSource === 'supabase') {
+        data.append('supabase_url', document.getElementById('supabase_url').value);
+        data.append('supabase_anon_key', document.getElementById('supabase_anon_key').value);
+    } else if (dataSource === 'snowflake') {
+        data.append('snowflake_account', document.getElementById('snowflake_account').value);
+        data.append('snowflake_user', document.getElementById('snowflake_user').value);
+        data.append('snowflake_password', document.getElementById('snowflake_password').value);
+        data.append('snowflake_warehouse', document.getElementById('snowflake_warehouse').value);
+        data.append('snowflake_database', document.getElementById('snowflake_database').value);
+        data.append('snowflake_schema', document.getElementById('snowflake_schema').value);
+        data.append('snowflake_role', document.getElementById('snowflake_role').value);
     } else {
         data.append('db_host', document.getElementById('db_host').value);
         data.append('db_port', document.getElementById('db_port').value);
@@ -375,7 +646,7 @@ async function connectSpreadsheet() {
         data.append('db_password', document.getElementById('db_password').value);
     }
 
-    const res = await fetch(`${API_BASE}/set_credentials`, { method:'POST', body:data });
+    const res = await fetch(`${API_BASE}/set_credentials`, { method:'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body:data });
     if(!res.ok) {
         const error = await res.json();
         return alert("Failed to connect: " + (error.error || "Unknown error"));
@@ -438,60 +709,6 @@ async function sendMessage() {
     document.getElementById('user_input').value = '';
 }
 
-// Save chatbot
-async function saveChatbot() {
-    // Validation: Ensure chatbot_id is generated
-    if (!document.getElementById('chatbot_id').value) {
-        alert("Please generate a Chatbot ID first.");
-        return;
-    }
-
-    const dataSource = document.getElementById('data_source').value;
-    const itemName = dataSource === 'google_sheets' ? 'sheet_names' : 'table_names';
-    const selectedItems = Array.from(document.querySelectorAll(`input[name="${itemName}"]:checked`)).map(el=>el.value);
-    const data = new URLSearchParams({
-        username: "<?= $_SESSION['username'] ?>",
-        chatbot_name: document.getElementById('chatbot_name').value,
-        chatbot_id: document.getElementById('chatbot_id').value,
-        gemini_api_key: document.getElementById('gemini_api_key').value,
-        gemini_model: document.getElementById('gemini_model').value,
-        data_source: dataSource
-    });
-
-    if (dataSource === 'google_sheets') {
-        data.append('sheet_id', document.getElementById('sheet_id').value);
-        data.append('service_account_json', document.getElementById('service_account_json').value);
-    } else if (dataSource === 'neo4j') {
-        data.append('neo4j_uri', document.getElementById('neo4j_uri').value);
-        data.append('neo4j_db_name', document.getElementById('neo4j_db_name').value);
-        data.append('neo4j_username', document.getElementById('neo4j_username').value);
-        data.append('neo4j_password', document.getElementById('neo4j_password').value);
-    } else if (dataSource === 'mongodb') {
-        data.append('mongo_uri', document.getElementById('mongo_uri').value);
-        data.append('mongo_db_name', document.getElementById('mongo_db_name').value);
-    } else {
-        data.append('db_host', document.getElementById('db_host').value);
-        data.append('db_port', document.getElementById('db_port').value);
-        data.append('db_name', document.getElementById('db_name').value);
-        data.append('db_username', document.getElementById('db_username').value);
-        data.append('db_password', document.getElementById('db_password').value);
-    }
-
-    selectedItems.forEach(s => data.append('selected_items', s));
-
-    // Logging: Print data being sent
-    console.log('Saving chatbot with data:', Object.fromEntries(data));
-
-    const res = await fetch(`${API_BASE}/save_chatbot`, { method:'POST', body:data });
-    if(res.ok) {
-        alert("Chatbot saved!");
-    } else {
-        // Error handling: Alert user if save fails
-        const error = await res.json();
-        alert("Failed to save chatbot: " + (error.message || "Unknown error"));
-    }
-}
-
 async function loadSavedChatbots() {
     const listDiv = document.getElementById('savedList');
     const username = "<?= $_SESSION['username'] ?>";
@@ -552,6 +769,37 @@ function fillForm(cb){
     } else if (cb.data_source === 'mongodb') {
         document.getElementById('mongo_uri').value = cb.mongo_uri;
         document.getElementById('mongo_db_name').value = cb.mongo_db_name;
+    } else if (cb.data_source === 'mssql') {
+        document.getElementById('mssql_host').value = cb.db_host;
+        document.getElementById('mssql_port').value = cb.db_port;
+        document.getElementById('mssql_name').value = cb.db_name;
+        document.getElementById('mssql_username').value = cb.db_username;
+        document.getElementById('mssql_password').value = cb.db_password;
+    } else if (cb.data_source === 'oracle') {
+        document.getElementById('oracle_version').value = cb.oracle_version || '19';
+        document.getElementById('db_host').value = cb.db_host;
+        document.getElementById('db_port').value = cb.db_port;
+        document.getElementById('db_name').value = cb.db_name;
+        document.getElementById('db_username').value = cb.db_username;
+        document.getElementById('db_password').value = cb.db_password;
+    } else if (cb.data_source === 'airtable') {
+        document.getElementById('airtable_api_key').value = cb.airtable_api_key;
+        document.getElementById('airtable_base_id').value = cb.airtable_base_id;
+    } else if (cb.data_source === 'databricks') {
+        document.getElementById('databricks_hostname').value = cb.databricks_hostname;
+        document.getElementById('databricks_http_path').value = cb.databricks_http_path;
+        document.getElementById('databricks_token').value = cb.databricks_token;
+    } else if (cb.data_source === 'supabase') {
+        document.getElementById('supabase_url').value = cb.supabase_url;
+        document.getElementById('supabase_anon_key').value = cb.supabase_anon_key;
+    } else if (cb.data_source === 'snowflake') {
+        document.getElementById('snowflake_account').value = cb.snowflake_account;
+        document.getElementById('snowflake_user').value = cb.snowflake_user;
+        document.getElementById('snowflake_password').value = cb.snowflake_password;
+        document.getElementById('snowflake_warehouse').value = cb.snowflake_warehouse;
+        document.getElementById('snowflake_database').value = cb.snowflake_database;
+        document.getElementById('snowflake_schema').value = cb.snowflake_schema;
+        document.getElementById('snowflake_role').value = cb.snowflake_role;
     } else {
         document.getElementById('db_host').value = cb.db_host;
         document.getElementById('db_port').value = cb.db_port;

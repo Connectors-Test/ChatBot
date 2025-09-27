@@ -4,7 +4,8 @@ class Chatbot:
                  service_account_json=None, db_host=None, db_port=None,
                  db_name=None, db_username=None, db_password=None,
                  selected_tables=None, mongo_uri=None, mongo_db_name=None,
-                 selected_collections=None):
+                 selected_collections=None, airtable_api_key=None, airtable_base_id=None,
+                 databricks_hostname=None, databricks_http_path=None, databricks_token=None):
         self.id = id
         self.username = username
         self.chatbot_name = chatbot_name
@@ -23,6 +24,11 @@ class Chatbot:
         self.mongo_uri = mongo_uri
         self.mongo_db_name = mongo_db_name
         self.selected_collections = selected_collections
+        self.airtable_api_key = airtable_api_key
+        self.airtable_base_id = airtable_base_id
+        self.databricks_hostname = databricks_hostname
+        self.databricks_http_path = databricks_http_path
+        self.databricks_token = databricks_token
 
     def to_dict(self):
         return {
@@ -43,7 +49,12 @@ class Chatbot:
             'selected_tables': self.selected_tables,
             'mongo_uri': self.mongo_uri,
             'mongo_db_name': self.mongo_db_name,
-            'selected_collections': self.selected_collections
+            'selected_collections': self.selected_collections,
+            'airtable_api_key': self.airtable_api_key,
+            'airtable_base_id': self.airtable_base_id,
+            'databricks_hostname': self.databricks_hostname,
+            'databricks_http_path': self.databricks_http_path,
+            'databricks_token': self.databricks_token
         }
 
     @classmethod
@@ -66,5 +77,10 @@ class Chatbot:
             selected_tables=data.get('selected_tables'),
             mongo_uri=data.get('mongo_uri'),
             mongo_db_name=data.get('mongo_db_name'),
-            selected_collections=data.get('selected_collections')
+            selected_collections=data.get('selected_collections'),
+            airtable_api_key=data.get('airtable_api_key'),
+            airtable_base_id=data.get('airtable_base_id'),
+            databricks_hostname=data.get('databricks_hostname'),
+            databricks_http_path=data.get('databricks_http_path'),
+            databricks_token=data.get('databricks_token')
         )
