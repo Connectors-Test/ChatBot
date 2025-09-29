@@ -18,6 +18,9 @@ from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from config import Config
 from app.services.database_service import DatabaseService
+import re
+import requests
+from google.auth.transport.requests import Request
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -517,7 +520,9 @@ def set_credentials():
             logging.info(f"Credentials created successfully.")
             gc = gspread.authorize(creds)
             spreadsheet = gc.open_by_key(CONFIG['sheet_id'])
-            items = [ws.title for ws in spreadsheet.worksheets()]
+            sheets = [{'title': ws.title, 'gid': ws.id} for ws in spreadsheet.worksheets()]
+            CONFIG['sheets'] = sheets
+            items = [s['title'] for s in sheets]
             return jsonify({'type': 'sheets', 'items': items})
         except Exception as e:
             logging.error(f"Failed to authorize or open spreadsheet: {str(e)}")
@@ -709,6 +714,7 @@ def set_items():
 
     if data_source == 'google_sheets':
         worksheets[:] = [spreadsheet.worksheet(name) for name in selected]
+        CONFIG['selected_sheets'] = selected
         selected_tables = []
     else:
         selected_tables = selected
@@ -720,6 +726,57 @@ def set_items():
 @main_bp.route('/chat', methods=['POST'])
 def chat():
     global worksheets, selected_tables, CONFIG, gemini_client, db_conn
+
+    def get_access_token(service_json):
+        """Obtain OAuth2 access token from service account JSON."""
+        try:
+            creds = Credentials.from_service_account_info(service_json, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
+            creds.refresh(Request())
+            return creds.token
+        except Exception as e:
+            logging.error(f"Failed to get access token: {str(e)}")
+            return None
+
+    def execute_gviz_query(sheet_id, query, sheet_gid, access_token):
+        """Execute a Google Visualization API query and return parsed results."""
+        base_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq"
+        params = {
+            'tq': query,
+            'gid': sheet_gid
+        }
+        headers = {
+            'Authorization': f'Bearer {access_token}'
+        }
+        try:
+            response = requests.get(base_url, params=params, headers=headers)
+            if response.status_code != 200:
+                logging.error(f"GViz query failed with status {response.status_code}: {response.text}")
+                return None
+            # Response is JSONP, e.g. "/*O_o*/\ngoogle.visualization.Query.setResponse({...});"
+            # Extract JSON inside the parentheses
+            json_text = re.search(r'google\.visualization\.Query\.setResponse\((.*)\);', response.text, re.DOTALL)
+            if not json_text:
+                logging.error("Failed to parse GViz query response")
+                return None
+            data = json.loads(json_text.group(1))
+            table = data.get('table')
+            if not table:
+                logging.error("No table data in GViz response")
+                return None
+            cols = [col['label'] or col['id'] for col in table.get('cols', [])]
+            rows = table.get('rows', [])
+            results = []
+            for row in rows:
+                entry = {}
+                for i, cell in enumerate(row.get('c', [])):
+                    val = cell.get('v') if cell else None
+                    entry[cols[i]] = val
+                results.append(entry)
+            return results
+        except Exception as e:
+            logging.error(f"Exception during GViz query: {str(e)}")
+            return None
+
     data = request.json
     share_key = data.get('share_key')
     if share_key:
@@ -779,8 +836,30 @@ def chat():
     user_input = request.json.get('message')
 
     if data_source == 'google_sheets':
-        all_data = {ws.title: ws.get_all_records() for ws in worksheets}
-        data_desc = "Spreadsheet data"
+        try:
+            service_json = json.loads(CONFIG['service_account_json'])
+        except Exception as e:
+            logging.error(f"Invalid service account JSON: {str(e)}")
+            return jsonify({'response': 'Invalid service account JSON.'})
+
+        try:
+            creds = Credentials.from_service_account_info(service_json, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
+            gc = gspread.authorize(creds)
+            spreadsheet = gc.open_by_key(CONFIG['sheet_id'])
+        except Exception as e:
+            logging.error(f"Failed to authorize or open spreadsheet: {str(e)}")
+            return jsonify({'response': 'Failed to authorize or open spreadsheet'}), 400
+
+        all_data = {}
+        for sheet_name in CONFIG['selected_sheets']:
+            try:
+                worksheet = spreadsheet.worksheet(sheet_name)
+                records = worksheet.get_all_records()
+                all_data[sheet_name] = records
+            except Exception as e:
+                logging.error(f"Failed to fetch data from sheet {sheet_name} using gspread: {str(e)}")
+                return jsonify({'response': f'Failed to fetch data from sheet {sheet_name} using gspread.'})
+        data_desc = "Spreadsheet data (gspread)"
     elif data_source == 'neo4j':
         all_data = {}
         driver = db_conn
