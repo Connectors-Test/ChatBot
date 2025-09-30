@@ -95,7 +95,30 @@ def init_db():
             airtable_base_id TEXT,
             databricks_hostname TEXT,
             databricks_http_path TEXT,
-            databricks_token TEXT
+            databricks_token TEXT,
+            supabase_url TEXT,
+            supabase_anon_key TEXT,
+            snowflake_account TEXT,
+            snowflake_user TEXT,
+            snowflake_password TEXT,
+            snowflake_warehouse TEXT,
+            snowflake_database TEXT,
+            snowflake_schema TEXT,
+            snowflake_role TEXT,
+            share_key TEXT UNIQUE,
+            company_logo TEXT,
+            nav_color TEXT,
+            text_color TEXT,
+            content_bg_color TEXT,
+            textarea_color TEXT,
+            textarea_border_color TEXT,
+            textarea_border_thickness TEXT,
+            button_color TEXT,
+            button_text_color TEXT,
+            border_color TEXT,
+            border_thickness TEXT,
+            nav_border_color TEXT,
+            nav_border_thickness TEXT
         )
     """)
 
@@ -111,137 +134,7 @@ def init_db():
             FOREIGN KEY (username) REFERENCES users (username)
         )
     """)
-    # Add missing columns if they don't exist
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN mongo_uri TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN mongo_db_name TEXT;")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN selected_collections TEXT;")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN airtable_api_key TEXT;")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN airtable_base_id TEXT;")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_hostname TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_http_path TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_token TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN supabase_url TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN supabase_anon_key TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_account TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_user TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_password TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_warehouse TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_database TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_schema TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_role TEXT;")
-    except sqlite3.OperationalError:
-        pass
-
-    # Add share and styling columns
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN share_key TEXT UNIQUE;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN company_logo TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN nav_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN text_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN content_bg_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN textarea_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN textarea_border_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN textarea_border_thickness TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN button_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN button_text_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN border_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN border_thickness TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN nav_border_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN nav_border_thickness TEXT;")
-    except sqlite3.OperationalError:
-        pass
+    
 
     conn.commit()
     conn.close()
@@ -854,12 +747,12 @@ def chat():
         for sheet_name in CONFIG['selected_sheets']:
             try:
                 worksheet = spreadsheet.worksheet(sheet_name)
-                records = worksheet.get_all_records()
+                records = worksheet.get_all_records()[:1000]
                 all_data[sheet_name] = records
             except Exception as e:
                 logging.error(f"Failed to fetch data from sheet {sheet_name} using gspread: {str(e)}")
                 return jsonify({'response': f'Failed to fetch data from sheet {sheet_name} using gspread.'})
-        data_desc = "Spreadsheet data (gspread)"
+        data_desc = "Spreadsheet data (gspread, limited to 1000 rows per sheet)"
     elif data_source == 'neo4j':
         all_data = {}
         driver = db_conn
@@ -1131,6 +1024,7 @@ def save_chatbot():
         share_key = request.form.get('share_key')
         if not share_key:
             share_key = secrets.token_urlsafe(16)
+            logging.info(f"Generated new share_key: {share_key}")
 
         chatbot_data = {
             'id': request.form['chatbot_id'],
@@ -1182,7 +1076,8 @@ def save_chatbot():
         }
         db_service = DatabaseService()
         db_service.save_chatbot(chatbot_data)
-        return jsonify({"success": True})
+        # Return share_key in response
+        return jsonify({"success": True, "share_key": share_key})
     except Exception as e:
         # Logging: Log exceptions
         logging.error(f"Error saving chatbot: {str(e)}")
@@ -1218,6 +1113,7 @@ def list_chatbots():
 # --- Shared Chatbot ---
 @main_bp.route('/shared/<share_key>', methods=['GET'])
 def shared_chatbot(share_key):
+    logging.info(f"Shared chatbot requested with share_key: {share_key}")
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -1225,7 +1121,10 @@ def shared_chatbot(share_key):
     row = cursor.fetchone()
     conn.close()
     if not row:
+        logging.warning(f"Chatbot not found for share_key: {share_key}")
         return "Chatbot not found", 404
+
+    logging.info(f"Chatbot found for share_key: {share_key}, chatbot_name: {row['chatbot_name']}")
 
     cb = dict(row)
     # Apply default styles if not set
@@ -1298,7 +1197,7 @@ def shared_chatbot(share_key):
         </div>
         <script>
             const API_BASE = "{Config().FRONTEND_URL or 'http://localhost:5001'}";
-            const chatbot_id = "{cb['id']}";
+            const shareKey = "{share_key}";
 
             async function sendMessage() {{
                 const input = document.getElementById('user_input').value;
@@ -1309,7 +1208,7 @@ def shared_chatbot(share_key):
                 const res = await fetch(`${{API_BASE}}/chat`, {{
                     method:'POST',
                     headers:{{'Content-Type':'application/json'}},
-                    body: JSON.stringify({{message: input, share_key: '{share_key}'}})
+                    body: JSON.stringify({{message: input, share_key: shareKey}})
                 }});
                 const data = await res.json();
                 chatDiv.innerHTML += `<p class="bot"><b>Bot:</b> ${{data.response}}</p>`;

@@ -13,7 +13,7 @@ services:
       - CORS_ORIGINS=http://localhost:8000,http://frontend:80
       - SECRET_KEY=dev-secret-key-change-in-production
     volumes:
-      - ../backend:/app/backend
+      - ../backend:/app/backend:cached
       - ../backend/config.py:/app/backend/config.py:ro
     networks:
       - chatbot-network
@@ -30,7 +30,7 @@ services:
     environment:
       - APACHE_DOCUMENT_ROOT=/var/www/html
     volumes:
-      - ../frontend:/var/www/html
+      - ../frontend:/var/www/html:cached
       - ../frontend/includes:/var/www/html/includes:ro
       - ../frontend/public:/var/www/html/public:ro
     networks:

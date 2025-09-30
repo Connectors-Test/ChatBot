@@ -55,7 +55,10 @@ if (isset($_GET['logout'])) {
     <!-- Invisible Button for Click Tracking -->
     <div id="invisibleButton" style="position: absolute; top: 10px; right: 10px; width: 50px; height: 50px; background: transparent; cursor: pointer; z-index: 1000;"></div>
 
-    <button class="btn btn-info mb-3" onclick="loadSavedChatbots()">Preview Saved Chatbots</button>
+    <div class="d-flex align-items-center mb-3">
+        <button class="btn btn-info" onclick="loadSavedChatbots()">Preview Saved Chatbots</button>
+        <button class="btn btn-success ms-2" id="shareBtn" onclick="openShareModal()" style="display:none;">Share</button>
+    </div>
     <div id="savedList" class="mb-3"></div>
 
     <!-- Chatbot Configuration Form -->
@@ -300,7 +303,10 @@ if (isset($_GET['logout'])) {
         <h4>Chat Interface</h4>
         <div id="chat"></div>
         <div class="input-group mt-2">
-            <input type="text" id="user_input" class="form-control" placeholder="Ask about your data...">
+            <div class="position-relative flex-grow-1">
+                <input type="text" id="user_input" class="form-control" placeholder="Ask about your data...">
+                <button class="btn position-absolute top-50 end-0 translate-middle-y me-2" id="micBtn" type="button" style="z-index: 5;">🎙️</button>
+            </div>
             <button class="btn btn-success" onclick="sendMessage()">Send</button>
         </div>
         <button class="btn btn-success mt-3" onclick="saveChatbot()">Save Chatbot</button>
@@ -321,11 +327,108 @@ if (isset($_GET['logout'])) {
         </div>
     </div>
 
+    <!-- Modal for Share Customization -->
+    <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="shareModalLabel">Customize Chatbot Design</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="customizeForm">
+                        <div class="mb-3">
+                            <label for="company_logo_upload">Upload Company Logo</label>
+                            <input type="file" class="form-control" id="company_logo_upload" accept="image/*">
+                            <input type="hidden" id="company_logo">
+                            <div id="logo_preview" style="margin-top: 10px;"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nav_color">Navigation Color</label>
+                                <input type="color" class="form-control" id="nav_color" value="#007bff">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="text_color">Text Color</label>
+                                <input type="color" class="form-control" id="text_color" value="#000000">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="content_bg_color">Content Area Color</label>
+                                <input type="color" class="form-control" id="content_bg_color" value="#ffffff">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="textarea_color">Text Area Color</label>
+                                <input type="color" class="form-control" id="textarea_color" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="textarea_border_color">Text Area Border Color</label>
+                                <input type="color" class="form-control" id="textarea_border_color" value="#cccccc">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="textarea_border_thickness">Text Area Border Thickness</label>
+                                <input type="text" class="form-control" id="textarea_border_thickness" value="1px">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="button_color">Button Color</label>
+                                <input type="color" class="form-control" id="button_color" value="#007bff">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="button_text_color">Button Text Color</label>
+                                <input type="color" class="form-control" id="button_text_color" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="border_color">Border Color</label>
+                                <input type="color" class="form-control" id="border_color" value="#007bff">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="border_thickness">Border Thickness</label>
+                                <input type="text" class="form-control" id="border_thickness" value="2px">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-info" onclick="previewChatbot()">Preview</button>
+                    <button type="button" class="btn btn-success" onclick="shareChatbot()">Share</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Iframe Code -->
+    <div class="modal fade" id="iframeModal" tabindex="-1" aria-labelledby="iframeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="iframeModalLabel">Embed Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="iframeCode" class="form-control" rows="5" readonly></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="copyIframeCode()">Copy Code</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 const API_BASE = "<?= $API_BASE ?>";
+
+let currentChatbot = null;
 
 // Variables for click tracking and unlock status
 let clickCount = parseInt(localStorage.getItem('invisibleButtonClicks')) || 0;
@@ -749,7 +852,6 @@ async function loadSavedChatbots() {
     }
 }
 
-// Fill form with saved chatbot
 function fillForm(cb){
     document.getElementById('chatbot_name').value = cb.chatbot_name;
     document.getElementById('chatbot_id').value = cb.id;
@@ -808,13 +910,211 @@ function fillForm(cb){
         document.getElementById('db_password').value = cb.db_password;
     }
 
+    // Fill styling fields for share modal
+    if (cb.styles) {
+        const styles = JSON.parse(cb.styles);
+        document.getElementById('company_logo').value = styles.company_logo || '';
+        if (styles.company_logo) {
+            document.getElementById('logo_preview').innerHTML = `<img src="${styles.company_logo}" style="max-width: 100px; max-height: 100px;">`;
+        } else {
+            document.getElementById('logo_preview').innerHTML = '';
+        }
+        document.getElementById('nav_color').value = styles.nav_color || '#007bff';
+        document.getElementById('text_color').value = styles.text_color || '#000000';
+        document.getElementById('content_bg_color').value = styles.content_bg_color || '#ffffff';
+        document.getElementById('textarea_color').value = styles.textarea_color || '#ffffff';
+        document.getElementById('textarea_border_color').value = styles.textarea_border_color || '#cccccc';
+        document.getElementById('textarea_border_thickness').value = styles.textarea_border_thickness || '1px';
+        document.getElementById('button_color').value = styles.button_color || '#007bff';
+        document.getElementById('button_text_color').value = styles.button_text_color || '#ffffff';
+        document.getElementById('border_color').value = styles.border_color || '#007bff';
+        document.getElementById('border_thickness').value = styles.border_thickness || '2px';
+    } else {
+        // Reset to defaults if no styles
+        document.getElementById('company_logo').value = '';
+        document.getElementById('logo_preview').innerHTML = '';
+        document.getElementById('nav_color').value = '#007bff';
+        document.getElementById('text_color').value = '#000000';
+        document.getElementById('content_bg_color').value = '#ffffff';
+        document.getElementById('textarea_color').value = '#ffffff';
+        document.getElementById('textarea_border_color').value = '#cccccc';
+        document.getElementById('textarea_border_thickness').value = '1px';
+        document.getElementById('button_color').value = '#007bff';
+        document.getElementById('button_text_color').value = '#ffffff';
+        document.getElementById('border_color').value = '#007bff';
+        document.getElementById('border_thickness').value = '2px';
+    }
+
     const selectedItems = JSON.parse(cb.selected_items || "[]");
     const itemName = cb.data_source === 'google_sheets' ? 'sheet_names' : 'table_names';
     const container = document.getElementById('sheetSelection');
     container.querySelectorAll(`input[name="${itemName}"]`).forEach(input=>{
         input.checked = selectedItems.includes(input.value);
     });
+
+    currentChatbot = cb;
+    document.getElementById('shareBtn').style.display = 'inline-block';
 }
+
+function openShareModal() {
+    if (!currentChatbot) {
+        alert("Please select a chatbot first.");
+        return;
+    }
+    const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+    modal.show();
+}
+
+async function previewChatbot() {
+    try {
+        await saveStyles();
+        if (!currentChatbot.share_key) {
+            alert("Share key not found. Please save the chatbot styles first.");
+            return;
+        }
+        window.open(`${API_BASE}/shared/${currentChatbot.share_key}`, '_blank');
+    } catch (error) {
+        alert("Error during preview: " + error.message);
+    }
+}
+
+async function shareChatbot() {
+    try {
+        await saveStyles();
+        if (!currentChatbot.share_key) {
+            alert("Share key not found. Please save the chatbot styles first.");
+            return;
+        }
+        const iframeCode = `<iframe src="${API_BASE}/shared/${currentChatbot.share_key}" width="400" height="600" frameborder="0"></iframe>`;
+        document.getElementById('iframeCode').value = iframeCode;
+        const modal = new bootstrap.Modal(document.getElementById('iframeModal'));
+        modal.show();
+    } catch (error) {
+        alert("Error during share: " + error.message);
+    }
+}
+
+function copyIframeCode() {
+    const textarea = document.getElementById('iframeCode');
+    textarea.select();
+    document.execCommand('copy');
+    alert('Copied to clipboard!');
+}
+
+async function saveStyles() {
+    if (!currentChatbot) {
+        alert("No chatbot selected to save.");
+        throw new Error("No chatbot selected");
+    }
+    const formData = new URLSearchParams({
+        username: "<?= $_SESSION['username'] ?>",
+        chatbot_id: currentChatbot.id,
+        chatbot_name: currentChatbot.chatbot_name,
+        gemini_api_key: currentChatbot.gemini_api_key,
+        gemini_model: currentChatbot.gemini_model,
+        data_source: currentChatbot.data_source,
+        sheet_id: currentChatbot.sheet_id || '',
+        service_account_json: currentChatbot.service_account_json || '',
+        db_host: currentChatbot.db_host || '',
+        db_port: currentChatbot.db_port || '',
+        db_name: currentChatbot.db_name || '',
+        db_username: currentChatbot.db_username || '',
+        db_password: currentChatbot.db_password || '',
+        selected_items: currentChatbot.selected_items || '',
+        mongo_uri: currentChatbot.mongo_uri || '',
+        mongo_db_name: currentChatbot.mongo_db_name || '',
+        selected_collections: currentChatbot.selected_collections || '',
+        airtable_api_key: currentChatbot.airtable_api_key || '',
+        airtable_base_id: currentChatbot.airtable_base_id || '',
+        databricks_hostname: currentChatbot.databricks_hostname || '',
+        databricks_http_path: currentChatbot.databricks_http_path || '',
+        databricks_token: currentChatbot.databricks_token || '',
+        supabase_url: currentChatbot.supabase_url || '',
+        supabase_anon_key: currentChatbot.supabase_anon_key || '',
+        snowflake_account: currentChatbot.snowflake_account || '',
+        snowflake_user: currentChatbot.snowflake_user || '',
+        snowflake_password: currentChatbot.snowflake_password || '',
+        snowflake_warehouse: currentChatbot.snowflake_warehouse || '',
+        snowflake_database: currentChatbot.snowflake_database || '',
+        snowflake_schema: currentChatbot.snowflake_schema || '',
+        snowflake_role: currentChatbot.snowflake_role || '',
+        share_key: currentChatbot.share_key || '',
+        company_logo: document.getElementById('company_logo').value,
+        nav_color: document.getElementById('nav_color').value,
+        text_color: document.getElementById('text_color').value,
+        content_bg_color: document.getElementById('content_bg_color').value,
+        textarea_color: document.getElementById('textarea_color').value,
+        textarea_border_color: document.getElementById('textarea_border_color').value,
+        textarea_border_thickness: document.getElementById('textarea_border_thickness').value,
+        button_color: document.getElementById('button_color').value,
+        button_text_color: document.getElementById('button_text_color').value,
+        border_color: document.getElementById('border_color').value,
+        border_thickness: document.getElementById('border_thickness').value
+    });
+
+    const res = await fetch(`${API_BASE}/save_chatbot`, { method:'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body:formData });
+    if(res.ok) {
+        const data = await res.json();
+        if(data.share_key) {
+            currentChatbot.share_key = data.share_key; // Update share_key if generated
+        } else {
+            alert("Share key not returned from server.");
+            throw new Error("Share key missing in response");
+        }
+    } else {
+        const errorData = await res.json();
+        alert("Failed to save styles: " + (errorData.message || "Unknown error"));
+        throw new Error("Save failed");
+    }
+}
+
+// Speech Recognition
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition;
+
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('user_input').value = transcript;
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+    };
+} else {
+    console.warn('Speech recognition not supported in this browser.');
+}
+
+function startListening() {
+    if (recognition) {
+        recognition.start();
+    } else {
+        alert('Speech recognition not supported.');
+    }
+}
+
+document.getElementById('micBtn').addEventListener('click', startListening);
+
+// Handle logo upload
+document.getElementById('company_logo_upload').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('company_logo').value = e.target.result;
+            document.getElementById('logo_preview').innerHTML = `<img src="${e.target.result}" style="max-width: 100px; max-height: 100px;">`;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        document.getElementById('company_logo').value = '';
+        document.getElementById('logo_preview').innerHTML = '';
+    }
+});
 </script>
 </body>
 </html>
