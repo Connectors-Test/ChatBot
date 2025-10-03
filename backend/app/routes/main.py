@@ -22,6 +22,194 @@ import re
 import requests
 from google.auth.transport.requests import Request
 
+# System instruction for BI tool
+system_instruction = """You are a generative BI (Business Intelligence) tool. Your purpose is to create components based on user prompts and provided data.
+
+You MUST strictly output **only a single, self-contained HTML block**. Do not include `<html>`, `<head>`, or `<body>` tags. Do not write any explanations outside of the HTML.
+
+**IMPORTANT**: The following templates use `QueryUrl` or `fetch` to get data. You MUST IGNORE this. Instead, you must take the data provided in the `Spreadsheet data:` section of the prompt and embed it directly into the JavaScript of the template, for example by using `google.visualization.arrayToDataTable(...)` or by populating table rows directly.
+
+Based on the user's request, you will generate one of the following outputs using the component definitions below:
+
+1.  **If the user asks for a "graph" or "chart":**
+    -   Generate ONLY the HTML and JavaScript for a single Google Chart, adapted from the Graph Template.
+
+2.  **If the user asks for a "table":**
+    -   Generate ONLY the HTML and JavaScript for a single paginated table, adapted from the Table Template.
+
+3.  **If the user asks for an "insight" or "summary":**
+    -   Generate ONLY a `<div>` containing the textual insight, adapted from the Insight Template.
+
+4.  **If the user asks for a "dashboard":**
+   - Generate a complete dashboard layout.
+   - The dashboard MUST contain:
+     - A flexbox container with **four** metric cards at the top.
+     - A container with **two** different Google Charts.
+     - A container with **two** different paginated tables.
+
+--- COMPONENT DEFINITIONS ---
+
+
+**Insight Template:**
+<div class="d-flex justify-content-center my-4">
+    <!-- Glassmorphic card for insight display -->
+    <div class="insight-glass text-center shadow-sm rounded">
+        <!-- Label or description -->
+        <div class="insight-text mb-3">
+            <span class="fw-semibold text-dark">Highest Value</span> is:
+        </div>
+        <!-- Main value -->
+        <div class="insight-number mb-3">4,567</div>
+        <!-- Additional info or timestamp -->
+        <div class="small text-muted">Updated: 9/30/2025, 10:00:00 AM</div>
+    </div>
+</div>
+
+<style>
+    /* Glass card styling for insight with more padding */
+    .insight-glass {
+        background: rgba(255, 255, 255, 0.65); /* semi-transparent white */
+        backdrop-filter: blur(12px);          /* blur effect */
+        border-radius: 1rem;                  /* rounded corners */
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08); /* soft shadow */
+        max-width: 400px;                     /* max width for card */
+        padding: 3rem 3.5rem;                 /* increased internal padding */
+    }
+
+    /* Description text inside the card */
+    .insight-text {
+        font-size: 1.2rem;
+        color: #444;
+    }
+
+    /* Large numeric value */
+    .insight-number {
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: #111;
+    }
+</style>
+
+
+
+**Table Template:**
+<!-- Bootstrap CSS (needed for table + pagination styles) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="glass-card mt-4">
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 1rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin: auto;
+            width: 100%;
+            max-width: 1200px;
+            overflow-x: auto;
+        }
+        thead th {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(6px);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+    </style>
+
+    <h2 class="mb-4 text-center fw-bold">📊 Table Title</h2>
+    <table id="sheetTable_UNIQUE_ID" class="table table-hover table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Column A</th>
+                <th>Column B</th>
+                <th>Column C</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td>A1</td><td>B1</td><td>C1</td></tr>
+            <tr><td>2</td><td>A2</td><td>B2</td><td>C2</td></tr>
+            <tr><td>3</td><td>A3</td><td>B3</td><td>C3</td></tr>
+            <tr><td>4</td><td>A4</td><td>B4</td><td>C4</td></tr>
+            <tr><td>5</td><td>A5</td><td>B5</td><td>C5</td></tr>
+            <tr><td>6</td><td>A6</td><td>B6</td><td>C6</td></tr>
+            <tr><td>7</td><td>A7</td><td>B7</td><td>C7</td></tr>
+            <tr><td>8</td><td>A8</td><td>B8</td><td>C8</td></tr>
+            <tr><td>9</td><td>A9</td><td>B9</td><td>C9</td></tr>
+            <tr><td>10</td><td>A10</td><td>B10</td><td>C10</td></tr>
+        </tbody>
+    </table>
+    <!-- Pagination will be injected here -->
+    <nav id="paginationContainer" class="d-flex justify-content-center mt-3"></nav>
+</div>
+
+<script>
+(function() {
+    const tableId = 'sheetTable_UNIQUE_ID';
+    const rowsPerPage = 5;
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const pageCount = Math.ceil(rows.length / rowsPerPage);
+    const paginationContainer = document.getElementById('paginationContainer');
+    let currentPage = 1;
+
+    function showPage(page) {
+        currentPage = page;
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        rows.forEach((row, index) => {
+            row.style.display = (index >= start && index < end) ? '' : 'none';
+        });
+        updatePaginationUI();
+    }
+
+    function updatePaginationUI() {
+        let paginationHTML = `
+            <ul class="pagination pagination-md">
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">« Prev</a>
+                </li>
+        `;
+        for (let i = 1; i <= pageCount; i++) {
+            paginationHTML += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+        }
+        paginationHTML += `
+                <li class="page-item ${currentPage === pageCount ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">Next »</a>
+                </li>
+            </ul>
+        `;
+        paginationContainer.innerHTML = paginationHTML;
+
+        paginationContainer.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                const page = parseInt(link.dataset.page);
+                if (page >= 1 && page <= pageCount) {
+                    showPage(page);
+                }
+            });
+        });
+    }
+
+    if (rows.length > 0) {
+        showPage(1);
+    }
+})();
+</script>
+
+
+"""
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
@@ -728,6 +916,12 @@ def chat():
 
     user_input = request.json.get('message')
 
+    # Parse limit from user input, e.g., "show me 5 rows"
+    limit = None
+    match = re.search(r'show me (\d+) rows?', user_input, re.IGNORECASE)
+    if match:
+        limit = int(match.group(1))
+
     if data_source == 'google_sheets':
         try:
             service_json = json.loads(CONFIG['service_account_json'])
@@ -748,6 +942,8 @@ def chat():
             try:
                 worksheet = spreadsheet.worksheet(sheet_name)
                 records = worksheet.get_all_records()[:1000]
+                if limit:
+                    records = records[:limit]
                 all_data[sheet_name] = records
             except Exception as e:
                 logging.error(f"Failed to fetch data from sheet {sheet_name} using gspread: {str(e)}")
@@ -760,6 +956,8 @@ def chat():
             for label in selected_tables:
                 result = session.run(f"MATCH (n:{label}) RETURN n")
                 records = [dict(record['n']) for record in result]
+                if limit:
+                    records = records[:limit]
                 all_data[label] = records
         data_desc = "Graph data"
     elif data_source == 'mongodb':
@@ -767,6 +965,8 @@ def chat():
         for collection in selected_tables:
             coll = db_conn[collection]
             documents = list(coll.find())
+            if limit:
+                documents = documents[:limit]
             # Convert ObjectId and datetime to string for JSON serialization
             for doc in documents:
                 for key, value in doc.items():
@@ -895,7 +1095,7 @@ def chat():
             cursor.close()
         data_desc = "Database data"
 
-    prompt = f"You are an assistant. {data_desc}: {json.dumps(all_data, indent=2, default=str)}\nUser: {user_input}\nAnswer:"
+    prompt = system_instruction + f"\nSpreadsheet data: {json.dumps(all_data, indent=2, default=str)}\nUser: {user_input}"
 
     if gemini_client is None:
         return jsonify({'response': 'Gemini client not initialized. Please set credentials first.'})

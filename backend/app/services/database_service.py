@@ -295,49 +295,48 @@ class DatabaseService:
             return {"status": "error", "message": f"Airtable fetch failed: {str(e)}"}
 
     def fetch_from_databricks(self, creds, query=None):
-        """
-        Fetch data from Databricks using databricks-sql-connector.
+            """
+            Fetch data from Databricks using databricks-sql-connector.
 
-        Args:
-            creds (dict): Must have 'server_hostname', 'http_path', 'access_token'
-            query (str): SQL SELECT query
+            Args:
+                creds (dict): Must have 'server_hostname', 'http_path', 'access_token'
+                query (str): SQL SELECT query
 
-        Returns:
-            list[dict]: Query results as list of dicts
-        """
-        conn = None
-        cur = None
+            Returns:
+                list[dict]: Query results as list of dicts
+            """
+            conn = None
+            cur = None
 
-        try:
-            # Connect with SSL verification disabled for self-signed certificates and timeout
-            conn = sql.connect(
-                server_hostname=creds['server_hostname'],
-                http_path=creds['http_path'],
-                access_token=creds['access_token'],
-                insecure=True,
-                timeout=60
-            )
-            cur = conn.cursor()
+            try:
+                # Connect with SSL verification disabled for self-signed certificates and timeout
+                conn = sql.connect(
+                    server_hostname=creds['server_hostname'],
+                    http_path=creds['http_path'],
+                    access_token=creds['access_token'],
+                    insecure=True,
+                    timeout=60
+                )
+                cur = conn.cursor()
 
-            # Execute query
-            cur.execute(query)
+                # Execute query
+                cur.execute(query)
 
-            # Extract results
-            columns = [desc[0] for desc in cur.description]
-            rows = cur.fetchall()
-            results = [dict(zip(columns, row)) for row in rows]
+                # Extract results
+                columns = [desc[0] for desc in cur.description]
+                rows = cur.fetchall()
+                results = [dict(zip(columns, row)) for row in rows]
 
-            return results
+                return results
 
-        except Exception as e:
-            logger.error(f"Databricks fetch failed: {str(e)}")
-            return {"status": "error", "message": f"Databricks fetch failed: {str(e)}"}
-        finally:
-            if cur:
-                cur.close()
-            if conn:
-                conn.close()
-
+            except Exception as e:
+                logger.error(f"Databricks fetch failed: {str(e)}")
+                return {"status": "error", "message": f"Databricks fetch failed: {str(e)}"}
+            finally:
+                if cur:
+                    cur.close()
+                if conn:
+                    conn.close()
     def fetch_from_supabase(self, creds, query=None):
         """
         Fetch data from Supabase using supabase-py.
