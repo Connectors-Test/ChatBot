@@ -7,6 +7,7 @@ from databricks import sql
 from supabase import create_client, Client
 import snowflake.connector
 from neo4j import GraphDatabase
+import xmlrpc.client
 import os
 
 
@@ -82,6 +83,13 @@ class DatabaseService:
                 nav_border_thickness TEXT
             )
         """)
+
+        # Add Odoo columns if not exists
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_url TEXT;")
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_db TEXT;")
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_username TEXT;")
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_password TEXT;")
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS selected_module TEXT;")
 
         conn.commit()
         conn.close()
@@ -423,3 +431,44 @@ class DatabaseService:
                 cur.close()
             if conn:
                 conn.close()
+
+    def fetch_from_odoo(self, creds, query=None):
+        """
+        Fetch data from Odoo using XML-RPC.
+
+        Args:
+            creds (dict): Must have 'url', 'db', 'username', 'password'
+            query (str): Model name to fetch from, e.g. 'product.product'
+
+        Returns:
+            list[dict]: Records as list of dicts
+        """
+        try:
+            url = creds['url']
+            db = creds['db']
+            username = creds['username']
+            password = creds['password']
+
+            # Create XML-RPC proxies with SSL certificate verification disabled
+            import ssl
+            context = ssl._create_unverified_context()
+
+            common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(url), context=context)
+            uid = common.authenticate(db, username, password, {})
+            if uid is False:
+                return {"status": "error", "message": "Authentication failed"}
+
+            models = xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(url), context=context)
+
+            if query is None or query.lower() == 'all':
+                # For now, return empty list; we handle specific models in routes
+                return []
+            else:
+                # query is the model name
+                ids = models.execute_kw(db, uid, password, query, 'search', [[]])
+                records = models.execute_kw(db, uid, password, query, 'read', [ids])
+                return records
+
+        except Exception as e:
+            logger.error(f"Odoo fetch failed: {str(e)}")
+            return {"status": "error", "message": f"Odoo fetch failed: {str(e)}"}

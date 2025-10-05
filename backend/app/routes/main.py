@@ -646,13 +646,27 @@ def set_credentials():
     elif data_source == 'neo4j':
         try:
             uri = CONFIG['neo4j_uri']
+            # Change URI scheme from neo4j+s to neo4j+ssc for self-signed certs
+            if uri.startswith("neo4j+s://"):
+                uri = uri.replace("neo4j+s://", "neo4j+ssc://")
+            elif uri.startswith("bolt+s://"):
+                uri = uri.replace("bolt+s://", "bolt+ssc://")
+
             username = CONFIG['neo4j_username']
             password = CONFIG['neo4j_password']
             database = CONFIG['neo4j_db_name']
+            # Override database name to 'neo4j' for Aura default if needed
+            if database != 'neo4j':
+                logging.warning(f"Overriding Neo4j database name from {database} to 'neo4j' for Aura compatibility")
+                database = 'neo4j'
             CONFIG['db_name'] = database  # Set for consistency in other parts
             logging.info(f"Neo4j connection: uri={uri}, username={username}, database={database}")
             logging.info(f"Received neo4j_db_name in set_credentials: {database}")
-            driver = GraphDatabase.driver(uri, auth=(username, password))
+            # Remove encrypted and trust parameters for URI scheme neo4j+ssc
+            driver = GraphDatabase.driver(
+                uri,
+                auth=(username, password)
+            )
             db_conn = driver
             with driver.session(database=database) as session:
                 result = session.run("MATCH (n) RETURN DISTINCT labels(n) AS labels")
@@ -783,6 +797,32 @@ def set_credentials():
         except Exception as e:
             return jsonify({'error': f'Snowflake connection failed: {str(e)}'}), 400
 
+    elif data_source == 'odoo':
+        try:
+            module = CONFIG.get('selected_module')
+            creds = {
+                'url': CONFIG['odoo_url'],
+                'db': CONFIG['odoo_db'],
+                'username': CONFIG['odoo_username'],
+                'password': CONFIG['odoo_password']
+            }
+            db_service = DatabaseService()
+            if module == 'CRM':
+                model = 'res.partner'
+            elif module == 'Inventory':
+                model = 'product.product'
+            elif module == 'Sales':
+                model = 'sale.order'
+            else:
+                return jsonify({'error': 'Invalid module'}), 400
+            results = db_service.fetch_from_odoo(creds, model)
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'error': results['message']}), 400
+            items = [str(record['id']) + ' - ' + (record.get('name') or record.get('display_name') or 'No name') for record in results]
+            return jsonify({'type': 'items', 'items': items})
+        except Exception as e:
+            return jsonify({'error': f'Odoo connection failed: {str(e)}'}), 400
+
     else:
         return jsonify({'error': 'Invalid data source'}), 400
 
@@ -898,7 +938,12 @@ def chat():
             'snowflake_warehouse': cb.get('snowflake_warehouse'),
             'snowflake_database': cb.get('snowflake_database'),
             'snowflake_schema': cb.get('snowflake_schema'),
-            'snowflake_role': cb.get('snowflake_role')
+            'snowflake_role': cb.get('snowflake_role'),
+            'odoo_url': cb.get('odoo_url'),
+            'odoo_db': cb.get('odoo_db'),
+            'odoo_username': cb.get('odoo_username'),
+            'odoo_password': cb.get('odoo_password'),
+            'selected_module': cb.get('selected_module')
         }
         selected_tables = json.loads(cb.get('selected_tables') or '[]')
         worksheets = []  # Reset
@@ -1084,6 +1129,31 @@ def chat():
                 return jsonify({'response': f'Error fetching from {table}: {results["message"]}'})
             all_data[table] = results
         data_desc = "Snowflake data"
+    elif data_source == 'odoo':
+        all_data = {}
+        creds = {
+            'url': CONFIG['odoo_url'],
+            'db': CONFIG['odoo_db'],
+            'username': CONFIG['odoo_username'],
+            'password': CONFIG['odoo_password']
+        }
+        module = CONFIG.get('selected_module')
+        if module == 'CRM':
+            model = 'res.partner'
+        elif module == 'Inventory':
+            model = 'product.product'
+        elif module == 'Sales':
+            model = 'sale.order'
+        else:
+            return jsonify({'response': 'Invalid module'})
+        db_service = DatabaseService()
+        results = db_service.fetch_from_odoo(creds, model)
+        if isinstance(results, dict) and results.get('status') == 'error':
+            return jsonify({'response': f'Error fetching from {model}: {results["message"]}'})
+        # Filter by selected_ids
+        selected_ids = [int(item.split(' - ')[0]) for item in selected_tables]
+        all_data[model] = [record for record in results if record['id'] in selected_ids]
+        data_desc = "Odoo data"
     else:
         all_data = {}
         for table in selected_tables:
@@ -1211,6 +1281,9 @@ def save_chatbot():
             snowflake_database = request.form.get('snowflake_database')
             snowflake_schema = request.form.get('snowflake_schema')
             snowflake_role = request.form.get('snowflake_role')
+        elif data_source == 'odoo':
+            selected_tables = json.dumps(selected_items)
+            # Odoo fields are handled in chatbot_data
         else:
             selected_tables = json.dumps(selected_items)
             db_host = request.form.get('db_host')
@@ -1259,6 +1332,11 @@ def save_chatbot():
             'snowflake_database': snowflake_database,
             'snowflake_schema': snowflake_schema,
             'snowflake_role': snowflake_role,
+            'odoo_url': request.form.get('odoo_url'),
+            'odoo_db': request.form.get('odoo_db'),
+            'odoo_username': request.form.get('odoo_username'),
+            'odoo_password': request.form.get('odoo_password'),
+            'selected_module': request.form.get('selected_module'),
             'share_key': share_key,
             'company_logo': request.form.get('company_logo'),
             'nav_color': request.form.get('nav_color'),

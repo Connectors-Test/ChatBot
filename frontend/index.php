@@ -94,201 +94,29 @@ if (isset($_GET['logout'])) {
                 <option value="mysql">MySQL</option>
                 <option value="postgresql">PostgreSQL</option>
                 <option value="mssql">MS SQL</option>
-                <option value="neo4j">Neo4j</option>
+            <option value="neo4j">Neo4j</option>
             <option value="mongodb">MongoDB</option>
             <option value="oracle">Oracle</option>
             <option value="airtable">Airtable</option>
             <option value="databricks">Databricks</option>
                 <option value="supabase">Supabase</option>
                 <option value="snowflake">Snowflake</option>
+                <option value="odoo">Odoo</option>
         </select>
     </div>
 
-    <div id="googleSheetsFields">
-        <div class="mb-3">
-            <label for="sheet_id">Google Spreadsheet ID</label>
-            <input type="text" class="form-control" id="sheet_id">
-        </div>
-
-        <div class="mb-3">
-            <label for="service_account_json">Service Account JSON</label>
-            <textarea class="form-control" id="service_account_json" rows="5"></textarea>
-        </div>
-    </div>
-
-    <div id="dbFields" style="display:none;">
-        <div class="mb-3">
-            <label for="db_host">Database Host</label>
-            <input type="text" class="form-control" id="db_host">
-        </div>
-        <div class="mb-3">
-            <label for="db_port">Database Port</label>
-            <input type="number" class="form-control" id="db_port" value="3306">
-        </div>
-        <div class="mb-3">
-            <label for="db_name">Database Name</label>
-            <input type="text" class="form-control" id="db_name">
-        </div>
-        <div class="mb-3">
-            <label for="db_username">Database Username</label>
-            <input type="text" class="form-control" id="db_username">
-        </div>
-        <div class="mb-3">
-            <label for="db_password">Database Password</label>
-            <input type="password" class="form-control" id="db_password">
-        </div>
-    </div>
-
-    <div id="mssqlFields" style="display:none;">
-        <div class="mb-3">
-            <label for="db_host">Database Host</label>
-            <input type="text" class="form-control" id="mssql_host">
-        </div>
-        <div class="mb-3">
-            <label for="db_port">Database Port</label>
-            <input type="number" class="form-control" id="mssql_port" value="1433">
-        </div>
-        <div class="mb-3">
-            <label for="db_name">Database Name</label>
-            <input type="text" class="form-control" id="mssql_name">
-        </div>
-        <div class="mb-3">
-            <label for="db_username">Database Username</label>
-            <input type="text" class="form-control" id="mssql_username">
-        </div>
-        <div class="mb-3">
-            <label for="db_password">Database Password</label>
-            <input type="password" class="form-control" id="mssql_password">
-        </div>
-    </div>
-
-    <div id="neo4jFields" style="display:none;">
-        <div class="mb-3">
-            <label for="neo4j_uri">Neo4j URI</label>
-            <input type="text" class="form-control" id="neo4j_uri">
-        </div>
-        <div class="mb-3">
-            <label for="neo4j_db_name">Database Name</label>
-            <input type="text" class="form-control" id="neo4j_db_name">
-        </div>
-        <div class="mb-3">
-            <label for="neo4j_username">Neo4j Username</label>
-            <input type="text" class="form-control" id="neo4j_username">
-        </div>
-        <div class="mb-3">
-            <label for="neo4j_password">Neo4j Password</label>
-            <input type="password" class="form-control" id="neo4j_password">
-        </div>
-    </div>
-
-    <div id="mongodbFields" style="display:none;">
-        <div class="mb-3">
-            <label for="mongo_uri">MongoDB URI</label>
-            <input type="text" class="form-control" id="mongo_uri" placeholder="mongodb://localhost:27017">
-        </div>
-        <div class="mb-3">
-            <label for="mongo_db_name">Database Name</label>
-            <input type="text" class="form-control" id="mongo_db_name">
-        </div>
-    </div>
-
-    <div id="oracleFields" style="display:none;">
-        <div class="mb-3">
-            <label for="oracle_version">Oracle Version</label>
-            <select class="form-select" id="oracle_version">
-                <option value="19">Oracle 19c</option>
-                <option value="23">Oracle 23c</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="db_host">Database Host</label>
-            <input type="text" class="form-control" id="db_host">
-        </div>
-        <div class="mb-3">
-            <label for="db_port">Database Port</label>
-            <input type="number" class="form-control" id="db_port" value="1521">
-        </div>
-        <div class="mb-3">
-            <label for="db_name">Service Name</label>
-            <input type="text" class="form-control" id="db_name">
-        </div>
-        <div class="mb-3">
-            <label for="db_username">Database Username</label>
-            <input type="text" class="form-control" id="db_username">
-        </div>
-        <div class="mb-3">
-            <label for="db_password">Database Password</label>
-            <input type="password" class="form-control" id="db_password">
-        </div>
-    </div>
-
-    <div id="airtableFields" style="display:none;">
-        <div class="mb-3">
-            <label for="airtable_api_key">Airtable API Key</label>
-            <input type="text" class="form-control" id="airtable_api_key" placeholder="keyXXXXXXXXXXXXXX">
-        </div>
-        <div class="mb-3">
-            <label for="airtable_base_id">Airtable Base ID</label>
-            <input type="text" class="form-control" id="airtable_base_id" placeholder="appXXXXXXXXXXXXXX">
-        </div>
-    </div>
-
-    <div id="databricksFields" style="display:none;">
-        <div class="mb-3">
-            <label for="databricks_hostname">Databricks Server Hostname</label>
-            <input type="text" class="form-control" id="databricks_hostname" placeholder="adb-1234567890123456.7.azuredatabricks.net">
-        </div>
-        <div class="mb-3">
-            <label for="databricks_http_path">HTTP Path</label>
-            <input type="text" class="form-control" id="databricks_http_path" placeholder="sql/protocolv1/o/1234567890123456/1234-567890-abcdef12">
-        </div>
-        <div class="mb-3">
-            <label for="databricks_token">Access Token</label>
-            <input type="password" class="form-control" id="databricks_token" placeholder="dapi-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
-        </div>
-    </div>
-
-    <div id="supabaseFields" style="display:none;">
-        <div class="mb-3">
-            <label for="supabase_url">Supabase URL</label>
-            <input type="text" class="form-control" id="supabase_url" placeholder="https://your-project.supabase.co">
-        </div>
-        <div class="mb-3">
-            <label for="supabase_anon_key">Supabase Anon Key</label>
-            <input type="password" class="form-control" id="supabase_anon_key" placeholder="your-anon-key">
-        </div>
-    </div>
-
-    <div id="snowflakeFields" style="display:none;">
-        <div class="mb-3">
-            <label for="snowflake_account">Snowflake Account</label>
-            <input type="text" class="form-control" id="snowflake_account" placeholder="your-account.snowflakecomputing.com">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_user">Snowflake User</label>
-            <input type="text" class="form-control" id="snowflake_user">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_password">Snowflake Password</label>
-            <input type="password" class="form-control" id="snowflake_password">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_warehouse">Warehouse</label>
-            <input type="text" class="form-control" id="snowflake_warehouse">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_database">Database</label>
-            <input type="text" class="form-control" id="snowflake_database">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_schema">Schema</label>
-            <input type="text" class="form-control" id="snowflake_schema">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_role">Role (optional)</label>
-            <input type="text" class="form-control" id="snowflake_role">
-        </div>
-    </div>
+    <!-- Dynamic Fields Based on Data Source -->
+    <?php include_once __DIR__ . '/includes/googleSheets_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/db_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/mssql_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/neo4j_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/mongodb_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/oracle_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/airtable_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/databricks_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/supabase_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/snowflake_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/odoo_fields.php'; ?>
 
         <button type="button" class="btn btn-primary mb-3" onclick="connectSpreadsheet()">Connect</button>
     </form>
@@ -470,6 +298,7 @@ function onDataSourceChange() {
     const databricksFields = document.getElementById('databricksFields');
     const supabaseFields = document.getElementById('supabaseFields');
     const snowflakeFields = document.getElementById('snowflakeFields');
+    const odooFields = document.getElementById('odooFields');
     if (dataSource === 'google_sheets') {
         googleFields.style.display = 'block';
         dbFields.style.display = 'none';
@@ -480,6 +309,7 @@ function onDataSourceChange() {
         airtableFields.style.display = 'none';
         supabaseFields.style.display = 'none';
         snowflakeFields.style.display = 'none';
+        odooFields.style.display = 'none';
     } else if (dataSource === 'mssql') {
         googleFields.style.display = 'none';
         dbFields.style.display = 'none';
@@ -490,6 +320,7 @@ function onDataSourceChange() {
         airtableFields.style.display = 'none';
         supabaseFields.style.display = 'none';
         snowflakeFields.style.display = 'none';
+        odooFields.style.display = 'none';
     } else if (dataSource === 'neo4j') {
         googleFields.style.display = 'none';
         dbFields.style.display = 'none';
@@ -500,6 +331,7 @@ function onDataSourceChange() {
         airtableFields.style.display = 'none';
         supabaseFields.style.display = 'none';
         snowflakeFields.style.display = 'none';
+        odooFields.style.display = 'none';
     } else if (dataSource === 'mongodb') {
         googleFields.style.display = 'none';
         dbFields.style.display = 'none';
@@ -510,6 +342,7 @@ function onDataSourceChange() {
         airtableFields.style.display = 'none';
         supabaseFields.style.display = 'none';
         snowflakeFields.style.display = 'none';
+        odooFields.style.display = 'none';
     } else if (dataSource === 'oracle') {
         googleFields.style.display = 'none';
         dbFields.style.display = 'none';
@@ -520,6 +353,7 @@ function onDataSourceChange() {
         airtableFields.style.display = 'none';
         supabaseFields.style.display = 'none';
         snowflakeFields.style.display = 'none';
+        odooFields.style.display = 'none';
     } else if (dataSource === 'airtable') {
         googleFields.style.display = 'none';
         dbFields.style.display = 'none';
@@ -530,6 +364,7 @@ function onDataSourceChange() {
         airtableFields.style.display = 'block';
         supabaseFields.style.display = 'none';
         snowflakeFields.style.display = 'none';
+        odooFields.style.display = 'none';
     } else if (dataSource === 'databricks') {
         googleFields.style.display = 'none';
         dbFields.style.display = 'none';
@@ -541,6 +376,7 @@ function onDataSourceChange() {
         databricksFields.style.display = 'block';
         supabaseFields.style.display = 'none';
         snowflakeFields.style.display = 'none';
+        odooFields.style.display = 'none';
     } else if (dataSource === 'supabase') {
         googleFields.style.display = 'none';
         dbFields.style.display = 'none';
@@ -552,6 +388,7 @@ function onDataSourceChange() {
         databricksFields.style.display = 'none';
         supabaseFields.style.display = 'block';
         snowflakeFields.style.display = 'none';
+        odooFields.style.display = 'none';
     } else if (dataSource === 'snowflake') {
         googleFields.style.display = 'none';
         dbFields.style.display = 'none';
@@ -563,6 +400,19 @@ function onDataSourceChange() {
         databricksFields.style.display = 'none';
         supabaseFields.style.display = 'none';
         snowflakeFields.style.display = 'block';
+        odooFields.style.display = 'none';
+    } else if (dataSource === 'odoo') {
+        googleFields.style.display = 'none';
+        dbFields.style.display = 'none';
+        mssqlFields.style.display = 'none';
+        neo4jFields.style.display = 'none';
+        mongodbFields.style.display = 'none';
+        oracleFields.style.display = 'none';
+        airtableFields.style.display = 'none';
+        databricksFields.style.display = 'none';
+        supabaseFields.style.display = 'none';
+        snowflakeFields.style.display = 'none';
+        odooFields.style.display = 'block';
     } else {
         googleFields.style.display = 'none';
         dbFields.style.display = 'block';
@@ -573,6 +423,7 @@ function onDataSourceChange() {
         airtableFields.style.display = 'none';
         supabaseFields.style.display = 'none';
         snowflakeFields.style.display = 'none';
+        odooFields.style.display = 'none';
         if (dataSource === 'mysql') {
             document.getElementById('db_port').value = '3306';
         } else if (dataSource === 'postgresql') {
@@ -667,6 +518,12 @@ async function saveChatbot() {
         formData.append('snowflake_database', document.getElementById('snowflake_database').value);
         formData.append('snowflake_schema', document.getElementById('snowflake_schema').value);
         formData.append('snowflake_role', document.getElementById('snowflake_role').value);
+    } else if (dataSource === 'odoo') {
+        formData.append('odoo_url', document.getElementById('odoo_url').value);
+        formData.append('odoo_db', document.getElementById('odoo_db').value);
+        formData.append('odoo_username', document.getElementById('odoo_username').value);
+        formData.append('odoo_password', document.getElementById('odoo_password').value);
+        formData.append('selected_module', document.getElementById('selected_module').value);
     } else {
         formData.append('db_host', document.getElementById('db_host').value);
         formData.append('db_port', document.getElementById('db_port').value);
@@ -741,6 +598,12 @@ async function connectSpreadsheet() {
         data.append('snowflake_database', document.getElementById('snowflake_database').value);
         data.append('snowflake_schema', document.getElementById('snowflake_schema').value);
         data.append('snowflake_role', document.getElementById('snowflake_role').value);
+    } else if (dataSource === 'odoo') {
+        data.append('odoo_url', document.getElementById('odoo_url').value);
+        data.append('odoo_db', document.getElementById('odoo_db').value);
+        data.append('odoo_username', document.getElementById('odoo_username').value);
+        data.append('odoo_password', document.getElementById('odoo_password').value);
+        data.append('selected_module', document.getElementById('selected_module').value);
     } else {
         data.append('db_host', document.getElementById('db_host').value);
         data.append('db_port', document.getElementById('db_port').value);
@@ -902,6 +765,12 @@ function fillForm(cb){
         document.getElementById('snowflake_database').value = cb.snowflake_database;
         document.getElementById('snowflake_schema').value = cb.snowflake_schema;
         document.getElementById('snowflake_role').value = cb.snowflake_role;
+    } else if (cb.data_source === 'odoo') {
+        document.getElementById('odoo_url').value = cb.odoo_url;
+        document.getElementById('odoo_db').value = cb.odoo_db;
+        document.getElementById('odoo_username').value = cb.odoo_username;
+        document.getElementById('odoo_password').value = cb.odoo_password;
+        document.getElementById('selected_module').value = cb.selected_module;
     } else {
         document.getElementById('db_host').value = cb.db_host;
         document.getElementById('db_port').value = cb.db_port;
@@ -1038,6 +907,11 @@ async function saveStyles() {
         snowflake_database: currentChatbot.snowflake_database || '',
         snowflake_schema: currentChatbot.snowflake_schema || '',
         snowflake_role: currentChatbot.snowflake_role || '',
+        odoo_url: currentChatbot.odoo_url || '',
+        odoo_db: currentChatbot.odoo_db || '',
+        odoo_username: currentChatbot.odoo_username || '',
+        odoo_password: currentChatbot.odoo_password || '',
+        selected_module: currentChatbot.selected_module || '',
         share_key: currentChatbot.share_key || '',
         company_logo: document.getElementById('company_logo').value,
         nav_color: document.getElementById('nav_color').value,
@@ -1118,7 +992,3 @@ document.getElementById('company_logo_upload').addEventListener('change', functi
 </script>
 </body>
 </html>
-
-
-
-
