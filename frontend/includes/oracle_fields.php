@@ -1,4 +1,4 @@
-    <div id="oracleFields" style="display:none;">
+<div id="oracleFields" style="display:none;">
         <div class="mb-3">
             <label for="oracle_version">Oracle Version</label>
             <select class="form-select" id="oracle_version">
@@ -26,4 +26,4 @@
             <label for="db_password">Database Password</label>
             <input type="password" class="form-control" id="db_password">
         </div>
-    </div>
+</div>

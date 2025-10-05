@@ -27,4 +27,4 @@
             <label for="snowflake_role">Role (optional)</label>
             <input type="text" class="form-control" id="snowflake_role">
         </div>
-    </div>
+</div>

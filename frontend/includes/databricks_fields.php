@@ -11,4 +11,4 @@
             <label for="databricks_token">Access Token</label>
             <input type="password" class="form-control" id="databricks_token" placeholder="dapi-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
         </div>
-    </div>
+</div>

@@ -7,4 +7,4 @@
             <label for="supabase_anon_key">Supabase Anon Key</label>
             <input type="password" class="form-control" id="supabase_anon_key" placeholder="your-anon-key">
         </div>
-    </div>
+</div>
