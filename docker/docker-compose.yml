@@ -1,0 +1,53 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/backend.Dockerfile
+    ports:
+      - "5001:5001"
+    environment:
+      - FLASK_ENV=development
+      - DEBUG=True
+      - HOST=0.0.0.0
+      - PORT=5001
+      - CORS_ORIGINS=http://localhost:8000,http://frontend:80
+      - SECRET_KEY=dev-secret-key-change-in-production
+    volumes:
+      - ../backend:/app/backend
+      - ../backend/config.py:/app/backend/config.py:ro
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
+    ports:
+      - "8000:80"
+    depends_on:
+      - backend
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+    volumes:
+      - ../frontend:/var/www/html
+      - ../frontend/includes:/var/www/html/includes:ro
+      - ../frontend/public:/var/www/html/public:ro
+    networks:
+      - chatbot-network
+    restart: unless-stopped
+
+  # Optional: Add database services here if needed
+  # mysql:
+  #   image: mysql:8
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: rootpassword
+  #     MYSQL_DATABASE: chatbot
+  #   ports:
+  #     - "3306:3306"
+  #   networks:
+  #     - chatbot-network
+
+networks:
+  chatbot-network:
+    driver: bridge

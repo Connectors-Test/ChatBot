@@ -1,0 +1,44 @@
+#chat {
+    border: 1px solid #ccc;
+    height: 300px;
+    overflow-y: scroll;
+    padding: 10px;
+    margin-top: 20px;
+}
+
+.user {
+    color: blue;
+}
+
+.bot {
+    color: green;
+}
+
+#savedList {
+    border: 1px solid #cbb5b5;
+    padding: 10px;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 10px;
+    position: absolute;
+    background: #ffffff;
+    width: 250px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+    z-index: 10000 !important;
+    border-radius: 4px;
+    display: none;
+}
+
+.savedItem {
+    cursor: pointer;
+    padding: 5px;
+    border-bottom: 1px solid #eee;
+}
+
+.savedItem:hover {
+    background-color: #f0f0f0;
+}
+
+#sheetSelection {
+    margin-top: 10px;
+}
