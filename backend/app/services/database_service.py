@@ -7,6 +7,7 @@ from databricks import sql
 from supabase import create_client, Client
 import snowflake.connector
 from neo4j import GraphDatabase
+import xmlrpc.client
 import os
 
 
@@ -56,79 +57,39 @@ class DatabaseService:
                 airtable_base_id TEXT,
                 databricks_hostname TEXT,
                 databricks_http_path TEXT,
-                databricks_token TEXT
+                databricks_token TEXT,
+                supabase_url TEXT,
+                supabase_anon_key TEXT,
+                snowflake_account TEXT,
+                snowflake_user TEXT,
+                snowflake_password TEXT,
+                snowflake_warehouse TEXT,
+                snowflake_database TEXT,
+                snowflake_schema TEXT,
+                snowflake_role TEXT,
+                share_key TEXT UNIQUE,
+                company_logo TEXT,
+                nav_color TEXT,
+                text_color TEXT,
+                content_bg_color TEXT,
+                textarea_color TEXT,
+                textarea_border_color TEXT,
+                textarea_border_thickness TEXT,
+                button_color TEXT,
+                button_text_color TEXT,
+                border_color TEXT,
+                border_thickness TEXT,
+                nav_border_color TEXT,
+                nav_border_thickness TEXT
             )
         """)
 
-        # Add missing columns if they don't exist
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN mongo_uri TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN mongo_db_name TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN selected_collections TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN airtable_api_key TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN airtable_base_id TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_hostname TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_http_path TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_token TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN supabase_url TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN supabase_anon_key TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_account TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_user TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_password TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_warehouse TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_database TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_schema TEXT;")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_role TEXT;")
-        except sqlite3.OperationalError:
-            pass
+        # Add Odoo columns if not exists
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_url TEXT;")
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_db TEXT;")
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_username TEXT;")
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_password TEXT;")
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS selected_module TEXT;")
 
         conn.commit()
         conn.close()
@@ -154,8 +115,8 @@ class DatabaseService:
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT OR REPLACE INTO chatbots (id, username, chatbot_name, gemini_api_key, gemini_model, data_source, sheet_id, selected_sheets, service_account_json, db_host, db_port, db_name, db_username, db_password, selected_tables, mongo_uri, mongo_db_name, selected_collections, airtable_api_key, airtable_base_id, databricks_hostname, databricks_http_path, databricks_token, supabase_url, supabase_anon_key, snowflake_account, snowflake_user, snowflake_password, snowflake_warehouse, snowflake_database, snowflake_schema, snowflake_role)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO chatbots (id, username, chatbot_name, gemini_api_key, gemini_model, data_source, sheet_id, selected_sheets, service_account_json, db_host, db_port, db_name, db_username, db_password, selected_tables, mongo_uri, mongo_db_name, selected_collections, airtable_api_key, airtable_base_id, databricks_hostname, databricks_http_path, databricks_token, supabase_url, supabase_anon_key, snowflake_account, snowflake_user, snowflake_password, snowflake_warehouse, snowflake_database, snowflake_schema, snowflake_role, company_logo, nav_color, text_color, content_bg_color, textarea_color, textarea_border_color, textarea_border_thickness, button_color, button_text_color, border_color, border_thickness, nav_border_color, nav_border_thickness, share_key)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             chatbot_data['id'],
             chatbot_data['username'],
@@ -188,7 +149,21 @@ class DatabaseService:
             chatbot_data.get('snowflake_warehouse'),
             chatbot_data.get('snowflake_database'),
             chatbot_data.get('snowflake_schema'),
-            chatbot_data.get('snowflake_role')
+            chatbot_data.get('snowflake_role'),
+            chatbot_data.get('company_logo'),
+            chatbot_data.get('nav_color'),
+            chatbot_data.get('text_color'),
+            chatbot_data.get('content_bg_color'),
+            chatbot_data.get('textarea_color'),
+            chatbot_data.get('textarea_border_color'),
+            chatbot_data.get('textarea_border_thickness'),
+            chatbot_data.get('button_color'),
+            chatbot_data.get('button_text_color'),
+            chatbot_data.get('border_color'),
+            chatbot_data.get('border_thickness'),
+            chatbot_data.get('nav_border_color'),
+            chatbot_data.get('nav_border_thickness'),
+            chatbot_data.get('share_key')
         ))
         conn.commit()
         conn.close()
@@ -328,49 +303,48 @@ class DatabaseService:
             return {"status": "error", "message": f"Airtable fetch failed: {str(e)}"}
 
     def fetch_from_databricks(self, creds, query=None):
-        """
-        Fetch data from Databricks using databricks-sql-connector.
+            """
+            Fetch data from Databricks using databricks-sql-connector.
 
-        Args:
-            creds (dict): Must have 'server_hostname', 'http_path', 'access_token'
-            query (str): SQL SELECT query
+            Args:
+                creds (dict): Must have 'server_hostname', 'http_path', 'access_token'
+                query (str): SQL SELECT query
 
-        Returns:
-            list[dict]: Query results as list of dicts
-        """
-        conn = None
-        cur = None
+            Returns:
+                list[dict]: Query results as list of dicts
+            """
+            conn = None
+            cur = None
 
-        try:
-            # Connect with SSL verification disabled for self-signed certificates and timeout
-            conn = sql.connect(
-                server_hostname=creds['server_hostname'],
-                http_path=creds['http_path'],
-                access_token=creds['access_token'],
-                insecure=True,
-                timeout=60
-            )
-            cur = conn.cursor()
+            try:
+                # Connect with SSL verification disabled for self-signed certificates and timeout
+                conn = sql.connect(
+                    server_hostname=creds['server_hostname'],
+                    http_path=creds['http_path'],
+                    access_token=creds['access_token'],
+                    insecure=True,
+                    timeout=60
+                )
+                cur = conn.cursor()
 
-            # Execute query
-            cur.execute(query)
+                # Execute query
+                cur.execute(query)
 
-            # Extract results
-            columns = [desc[0] for desc in cur.description]
-            rows = cur.fetchall()
-            results = [dict(zip(columns, row)) for row in rows]
+                # Extract results
+                columns = [desc[0] for desc in cur.description]
+                rows = cur.fetchall()
+                results = [dict(zip(columns, row)) for row in rows]
 
-            return results
+                return results
 
-        except Exception as e:
-            logger.error(f"Databricks fetch failed: {str(e)}")
-            return {"status": "error", "message": f"Databricks fetch failed: {str(e)}"}
-        finally:
-            if cur:
-                cur.close()
-            if conn:
-                conn.close()
-
+            except Exception as e:
+                logger.error(f"Databricks fetch failed: {str(e)}")
+                return {"status": "error", "message": f"Databricks fetch failed: {str(e)}"}
+            finally:
+                if cur:
+                    cur.close()
+                if conn:
+                    conn.close()
     def fetch_from_supabase(self, creds, query=None):
         """
         Fetch data from Supabase using supabase-py.
@@ -457,3 +431,44 @@ class DatabaseService:
                 cur.close()
             if conn:
                 conn.close()
+
+    def fetch_from_odoo(self, creds, query=None):
+        """
+        Fetch data from Odoo using XML-RPC.
+
+        Args:
+            creds (dict): Must have 'url', 'db', 'username', 'password'
+            query (str): Model name to fetch from, e.g. 'product.product'
+
+        Returns:
+            list[dict]: Records as list of dicts
+        """
+        try:
+            url = creds['url']
+            db = creds['db']
+            username = creds['username']
+            password = creds['password']
+
+            # Create XML-RPC proxies with SSL certificate verification disabled
+            import ssl
+            context = ssl._create_unverified_context()
+
+            common = xmlrpc.client.ServerProxy('{}/xmlrpc/2/common'.format(url), context=context)
+            uid = common.authenticate(db, username, password, {})
+            if uid is False:
+                return {"status": "error", "message": "Authentication failed"}
+
+            models = xmlrpc.client.ServerProxy('{}/xmlrpc/2/object'.format(url), context=context)
+
+            if query is None or query.lower() == 'all':
+                # For now, return empty list; we handle specific models in routes
+                return []
+            else:
+                # query is the model name
+                ids = models.execute_kw(db, uid, password, query, 'search', [[]])
+                records = models.execute_kw(db, uid, password, query, 'read', [ids])
+                return records
+
+        except Exception as e:
+            logger.error(f"Odoo fetch failed: {str(e)}")
+            return {"status": "error", "message": f"Odoo fetch failed: {str(e)}"}

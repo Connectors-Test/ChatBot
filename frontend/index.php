@@ -55,7 +55,10 @@ if (isset($_GET['logout'])) {
     <!-- Invisible Button for Click Tracking -->
     <div id="invisibleButton" style="position: absolute; top: 10px; right: 10px; width: 50px; height: 50px; background: transparent; cursor: pointer; z-index: 1000;"></div>
 
-    <button class="btn btn-info mb-3" onclick="loadSavedChatbots()">Preview Saved Chatbots</button>
+    <div class="d-flex align-items-center mb-3">
+        <button class="btn btn-info" onclick="loadSavedChatbots()">Preview Saved Chatbots</button>
+        <button class="btn btn-success ms-2" id="shareBtn" onclick="openShareModal()" style="display:none;">Share</button>
+    </div>
     <div id="savedList" class="mb-3"></div>
 
     <!-- Chatbot Configuration Form -->
@@ -91,201 +94,29 @@ if (isset($_GET['logout'])) {
                 <option value="mysql">MySQL</option>
                 <option value="postgresql">PostgreSQL</option>
                 <option value="mssql">MS SQL</option>
-                <option value="neo4j">Neo4j</option>
+            <option value="neo4j">Neo4j</option>
             <option value="mongodb">MongoDB</option>
             <option value="oracle">Oracle</option>
             <option value="airtable">Airtable</option>
             <option value="databricks">Databricks</option>
                 <option value="supabase">Supabase</option>
                 <option value="snowflake">Snowflake</option>
+                <option value="odoo">Odoo</option>
         </select>
     </div>
 
-    <div id="googleSheetsFields">
-        <div class="mb-3">
-            <label for="sheet_id">Google Spreadsheet ID</label>
-            <input type="text" class="form-control" id="sheet_id">
-        </div>
-
-        <div class="mb-3">
-            <label for="service_account_json">Service Account JSON</label>
-            <textarea class="form-control" id="service_account_json" rows="5"></textarea>
-        </div>
-    </div>
-
-    <div id="dbFields" style="display:none;">
-        <div class="mb-3">
-            <label for="db_host">Database Host</label>
-            <input type="text" class="form-control" id="db_host">
-        </div>
-        <div class="mb-3">
-            <label for="db_port">Database Port</label>
-            <input type="number" class="form-control" id="db_port" value="3306">
-        </div>
-        <div class="mb-3">
-            <label for="db_name">Database Name</label>
-            <input type="text" class="form-control" id="db_name">
-        </div>
-        <div class="mb-3">
-            <label for="db_username">Database Username</label>
-            <input type="text" class="form-control" id="db_username">
-        </div>
-        <div class="mb-3">
-            <label for="db_password">Database Password</label>
-            <input type="password" class="form-control" id="db_password">
-        </div>
-    </div>
-
-    <div id="mssqlFields" style="display:none;">
-        <div class="mb-3">
-            <label for="db_host">Database Host</label>
-            <input type="text" class="form-control" id="mssql_host">
-        </div>
-        <div class="mb-3">
-            <label for="db_port">Database Port</label>
-            <input type="number" class="form-control" id="mssql_port" value="1433">
-        </div>
-        <div class="mb-3">
-            <label for="db_name">Database Name</label>
-            <input type="text" class="form-control" id="mssql_name">
-        </div>
-        <div class="mb-3">
-            <label for="db_username">Database Username</label>
-            <input type="text" class="form-control" id="mssql_username">
-        </div>
-        <div class="mb-3">
-            <label for="db_password">Database Password</label>
-            <input type="password" class="form-control" id="mssql_password">
-        </div>
-    </div>
-
-    <div id="neo4jFields" style="display:none;">
-        <div class="mb-3">
-            <label for="neo4j_uri">Neo4j URI</label>
-            <input type="text" class="form-control" id="neo4j_uri">
-        </div>
-        <div class="mb-3">
-            <label for="neo4j_db_name">Database Name</label>
-            <input type="text" class="form-control" id="neo4j_db_name">
-        </div>
-        <div class="mb-3">
-            <label for="neo4j_username">Neo4j Username</label>
-            <input type="text" class="form-control" id="neo4j_username">
-        </div>
-        <div class="mb-3">
-            <label for="neo4j_password">Neo4j Password</label>
-            <input type="password" class="form-control" id="neo4j_password">
-        </div>
-    </div>
-
-    <div id="mongodbFields" style="display:none;">
-        <div class="mb-3">
-            <label for="mongo_uri">MongoDB URI</label>
-            <input type="text" class="form-control" id="mongo_uri" placeholder="mongodb://localhost:27017">
-        </div>
-        <div class="mb-3">
-            <label for="mongo_db_name">Database Name</label>
-            <input type="text" class="form-control" id="mongo_db_name">
-        </div>
-    </div>
-
-    <div id="oracleFields" style="display:none;">
-        <div class="mb-3">
-            <label for="oracle_version">Oracle Version</label>
-            <select class="form-select" id="oracle_version">
-                <option value="19">Oracle 19c</option>
-                <option value="23">Oracle 23c</option>
-            </select>
-        </div>
-        <div class="mb-3">
-            <label for="db_host">Database Host</label>
-            <input type="text" class="form-control" id="db_host">
-        </div>
-        <div class="mb-3">
-            <label for="db_port">Database Port</label>
-            <input type="number" class="form-control" id="db_port" value="1521">
-        </div>
-        <div class="mb-3">
-            <label for="db_name">Service Name</label>
-            <input type="text" class="form-control" id="db_name">
-        </div>
-        <div class="mb-3">
-            <label for="db_username">Database Username</label>
-            <input type="text" class="form-control" id="db_username">
-        </div>
-        <div class="mb-3">
-            <label for="db_password">Database Password</label>
-            <input type="password" class="form-control" id="db_password">
-        </div>
-    </div>
-
-    <div id="airtableFields" style="display:none;">
-        <div class="mb-3">
-            <label for="airtable_api_key">Airtable API Key</label>
-            <input type="text" class="form-control" id="airtable_api_key" placeholder="keyXXXXXXXXXXXXXX">
-        </div>
-        <div class="mb-3">
-            <label for="airtable_base_id">Airtable Base ID</label>
-            <input type="text" class="form-control" id="airtable_base_id" placeholder="appXXXXXXXXXXXXXX">
-        </div>
-    </div>
-
-    <div id="databricksFields" style="display:none;">
-        <div class="mb-3">
-            <label for="databricks_hostname">Databricks Server Hostname</label>
-            <input type="text" class="form-control" id="databricks_hostname" placeholder="adb-1234567890123456.7.azuredatabricks.net">
-        </div>
-        <div class="mb-3">
-            <label for="databricks_http_path">HTTP Path</label>
-            <input type="text" class="form-control" id="databricks_http_path" placeholder="sql/protocolv1/o/1234567890123456/1234-567890-abcdef12">
-        </div>
-        <div class="mb-3">
-            <label for="databricks_token">Access Token</label>
-            <input type="password" class="form-control" id="databricks_token" placeholder="dapi-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX">
-        </div>
-    </div>
-
-    <div id="supabaseFields" style="display:none;">
-        <div class="mb-3">
-            <label for="supabase_url">Supabase URL</label>
-            <input type="text" class="form-control" id="supabase_url" placeholder="https://your-project.supabase.co">
-        </div>
-        <div class="mb-3">
-            <label for="supabase_anon_key">Supabase Anon Key</label>
-            <input type="password" class="form-control" id="supabase_anon_key" placeholder="your-anon-key">
-        </div>
-    </div>
-
-    <div id="snowflakeFields" style="display:none;">
-        <div class="mb-3">
-            <label for="snowflake_account">Snowflake Account</label>
-            <input type="text" class="form-control" id="snowflake_account" placeholder="your-account.snowflakecomputing.com">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_user">Snowflake User</label>
-            <input type="text" class="form-control" id="snowflake_user">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_password">Snowflake Password</label>
-            <input type="password" class="form-control" id="snowflake_password">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_warehouse">Warehouse</label>
-            <input type="text" class="form-control" id="snowflake_warehouse">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_database">Database</label>
-            <input type="text" class="form-control" id="snowflake_database">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_schema">Schema</label>
-            <input type="text" class="form-control" id="snowflake_schema">
-        </div>
-        <div class="mb-3">
-            <label for="snowflake_role">Role (optional)</label>
-            <input type="text" class="form-control" id="snowflake_role">
-        </div>
-    </div>
+    <!-- Dynamic Fields Based on Data Source -->
+    <?php include_once __DIR__ . '/includes/googleSheets_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/db_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/mssql_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/neo4j_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/mongodb_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/oracle_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/airtable_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/databricks_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/supabase_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/snowflake_fields.php'; ?>
+    <?php include_once __DIR__ . '/includes/odoo_fields.php'; ?>
 
         <button type="button" class="btn btn-primary mb-3" onclick="connectSpreadsheet()">Connect</button>
     </form>
@@ -300,7 +131,10 @@ if (isset($_GET['logout'])) {
         <h4>Chat Interface</h4>
         <div id="chat"></div>
         <div class="input-group mt-2">
-            <input type="text" id="user_input" class="form-control" placeholder="Ask about your data...">
+            <div class="position-relative flex-grow-1">
+                <input type="text" id="user_input" class="form-control" placeholder="Ask about your data...">
+                <button class="btn position-absolute top-50 end-0 translate-middle-y me-2" id="micBtn" type="button" style="z-index: 5;">🎙️</button>
+            </div>
             <button class="btn btn-success" onclick="sendMessage()">Send</button>
         </div>
         <button class="btn btn-success mt-3" onclick="saveChatbot()">Save Chatbot</button>
@@ -321,11 +155,108 @@ if (isset($_GET['logout'])) {
         </div>
     </div>
 
+    <!-- Modal for Share Customization -->
+    <div class="modal fade" id="shareModal" tabindex="-1" aria-labelledby="shareModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="shareModalLabel">Customize Chatbot Design</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="customizeForm">
+                        <div class="mb-3">
+                            <label for="company_logo_upload">Upload Company Logo</label>
+                            <input type="file" class="form-control" id="company_logo_upload" accept="image/*">
+                            <input type="hidden" id="company_logo">
+                            <div id="logo_preview" style="margin-top: 10px;"></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="nav_color">Navigation Color</label>
+                                <input type="color" class="form-control" id="nav_color" value="#007bff">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="text_color">Text Color</label>
+                                <input type="color" class="form-control" id="text_color" value="#000000">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="content_bg_color">Content Area Color</label>
+                                <input type="color" class="form-control" id="content_bg_color" value="#ffffff">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="textarea_color">Text Area Color</label>
+                                <input type="color" class="form-control" id="textarea_color" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="textarea_border_color">Text Area Border Color</label>
+                                <input type="color" class="form-control" id="textarea_border_color" value="#cccccc">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="textarea_border_thickness">Text Area Border Thickness</label>
+                                <input type="text" class="form-control" id="textarea_border_thickness" value="1px">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="button_color">Button Color</label>
+                                <input type="color" class="form-control" id="button_color" value="#007bff">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="button_text_color">Button Text Color</label>
+                                <input type="color" class="form-control" id="button_text_color" value="#ffffff">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="border_color">Border Color</label>
+                                <input type="color" class="form-control" id="border_color" value="#007bff">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="border_thickness">Border Thickness</label>
+                                <input type="text" class="form-control" id="border_thickness" value="2px">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-info" onclick="previewChatbot()">Preview</button>
+                    <button type="button" class="btn btn-success" onclick="shareChatbot()">Share</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Iframe Code -->
+    <div class="modal fade" id="iframeModal" tabindex="-1" aria-labelledby="iframeModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="iframeModalLabel">Embed Code</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="iframeCode" class="form-control" rows="5" readonly></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="copyIframeCode()">Copy Code</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 const API_BASE = "<?= $API_BASE ?>";
+
+let currentChatbot = null;
 
 // Variables for click tracking and unlock status
 let clickCount = parseInt(localStorage.getItem('invisibleButtonClicks')) || 0;
@@ -354,137 +285,177 @@ function checkUnlocked() {
     return isUnlocked;
 }
 
-// Modified onDataSourceChange to show modal if not unlocked
-function onDataSourceChange() {
-    const dataSource = document.getElementById('data_source').value;
-    const googleFields = document.getElementById('googleSheetsFields');
-    const dbFields = document.getElementById('dbFields');
-    const mssqlFields = document.getElementById('mssqlFields');
-    const neo4jFields = document.getElementById('neo4jFields');
-    const mongodbFields = document.getElementById('mongodbFields');
-    const oracleFields = document.getElementById('oracleFields');
-    const airtableFields = document.getElementById('airtableFields');
-    const databricksFields = document.getElementById('databricksFields');
-    const supabaseFields = document.getElementById('supabaseFields');
-    const snowflakeFields = document.getElementById('snowflakeFields');
-    if (dataSource === 'google_sheets') {
-        googleFields.style.display = 'block';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-    } else if (dataSource === 'mssql') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'block';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-    } else if (dataSource === 'neo4j') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'block';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-    } else if (dataSource === 'mongodb') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'block';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-    } else if (dataSource === 'oracle') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'block';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-    } else if (dataSource === 'airtable') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'block';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-    } else if (dataSource === 'databricks') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        databricksFields.style.display = 'block';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-    } else if (dataSource === 'supabase') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        databricksFields.style.display = 'none';
-        supabaseFields.style.display = 'block';
-        snowflakeFields.style.display = 'none';
-    } else if (dataSource === 'snowflake') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        databricksFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'block';
-    } else {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'block';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-        if (dataSource === 'mysql') {
-            document.getElementById('db_port').value = '3306';
-        } else if (dataSource === 'postgresql') {
-            document.getElementById('db_port').value = '5432';
+    // Modified onDataSourceChange to show modal if not unlocked
+    function onDataSourceChange() {
+        const dataSource = document.getElementById('data_source').value;
+        const googleFields = document.getElementById('googleSheetsFields');
+        const dbFields = document.getElementById('dbFields');
+        const mssqlFields = document.getElementById('mssqlFields');
+        const neo4jFields = document.getElementById('neo4jFields');
+        const mongodbFields = document.getElementById('mongodbFields');
+        const oracleFields = document.getElementById('oracleFields');
+        const airtableFields = document.getElementById('airtableFields');
+        const databricksFields = document.getElementById('databricksFields');
+        const supabaseFields = document.getElementById('supabaseFields');
+        const snowflakeFields = document.getElementById('snowflakeFields');
+        const odooFields = document.getElementById('odooFields');
+        if (dataSource === 'google_sheets') {
+            googleFields.style.display = 'block';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'mssql') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'block';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'neo4j') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'block';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'mongodb') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'block';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'oracle') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'block';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'airtable') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'block';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'databricks') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'block';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'supabase') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'block';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'snowflake') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'block';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'odoo') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'block';
+        } else {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'block';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+            if (dataSource === 'mysql') {
+                document.getElementById('db_port').value = '3306';
+            } else if (dataSource === 'postgresql') {
+                document.getElementById('db_port').value = '5432';
+            }
+        }
+
+        // Show modal if not unlocked and not Google Sheets
+        console.log('onDataSourceChange: dataSource =', dataSource, 'isUnlocked =', checkUnlocked());
+        if (!checkUnlocked() && dataSource !== 'google_sheets') {
+            console.log('Showing modal for datasource selection');
+            const modal = new bootstrap.Modal(document.getElementById('jotformModal'));
+            modal.show();
         }
     }
 
-    // Show modal if not unlocked and not Google Sheets
-    console.log('onDataSourceChange: dataSource =', dataSource, 'isUnlocked =', checkUnlocked());
-    if (!checkUnlocked() && dataSource !== 'google_sheets') {
-        console.log('Showing modal for datasource selection');
-        const modal = new bootstrap.Modal(document.getElementById('jotformModal'));
-        modal.show();
-    }
-}
+    // Add event listener for modal close to rollback datasource to google_sheets
+    const jotformModal = document.getElementById('jotformModal');
+    jotformModal.addEventListener('hidden.bs.modal', function () {
+        const dataSourceSelect = document.getElementById('data_source');
+        if (dataSourceSelect.value !== 'google_sheets') {
+            dataSourceSelect.value = 'google_sheets';
+            onDataSourceChange();
+        }
+    });
 
 // Modified saveChatbot to check count and show modal if needed
 async function saveChatbot() {
@@ -564,6 +535,12 @@ async function saveChatbot() {
         formData.append('snowflake_database', document.getElementById('snowflake_database').value);
         formData.append('snowflake_schema', document.getElementById('snowflake_schema').value);
         formData.append('snowflake_role', document.getElementById('snowflake_role').value);
+    } else if (dataSource === 'odoo') {
+        formData.append('odoo_url', document.getElementById('odoo_url').value);
+        formData.append('odoo_db', document.getElementById('odoo_db').value);
+        formData.append('odoo_username', document.getElementById('odoo_username').value);
+        formData.append('odoo_password', document.getElementById('odoo_password').value);
+        formData.append('selected_module', document.getElementById('selected_module').value);
     } else {
         formData.append('db_host', document.getElementById('db_host').value);
         formData.append('db_port', document.getElementById('db_port').value);
@@ -638,6 +615,12 @@ async function connectSpreadsheet() {
         data.append('snowflake_database', document.getElementById('snowflake_database').value);
         data.append('snowflake_schema', document.getElementById('snowflake_schema').value);
         data.append('snowflake_role', document.getElementById('snowflake_role').value);
+    } else if (dataSource === 'odoo') {
+        data.append('odoo_url', document.getElementById('odoo_url').value);
+        data.append('odoo_db', document.getElementById('odoo_db').value);
+        data.append('odoo_username', document.getElementById('odoo_username').value);
+        data.append('odoo_password', document.getElementById('odoo_password').value);
+        data.append('selected_module', document.getElementById('selected_module').value);
     } else {
         data.append('db_host', document.getElementById('db_host').value);
         data.append('db_port', document.getElementById('db_port').value);
@@ -704,7 +687,18 @@ async function sendMessage() {
         body: JSON.stringify({message: input})
     });
     const data = await res.json();
-    chatDiv.innerHTML += `<p class="bot"><b>Bot:</b> ${data.response}</p>`;
+
+    // Check if response contains HTML tags (simple check)
+    const isHTML = /<\/?[a-z][\s\S]*>/i.test(data.response);
+
+    if (isHTML) {
+        // Insert raw HTML inside a div container
+        chatDiv.innerHTML += `<div class="bot">${data.response}</div>`;
+    } else {
+        // Insert as plain text inside a paragraph
+        chatDiv.innerHTML += `<p class="bot"><b>Bot:</b> ${data.response}</p>`;
+    }
+
     chatDiv.scrollTop = chatDiv.scrollHeight;
     document.getElementById('user_input').value = '';
 }
@@ -749,7 +743,6 @@ async function loadSavedChatbots() {
     }
 }
 
-// Fill form with saved chatbot
 function fillForm(cb){
     document.getElementById('chatbot_name').value = cb.chatbot_name;
     document.getElementById('chatbot_id').value = cb.id;
@@ -800,6 +793,12 @@ function fillForm(cb){
         document.getElementById('snowflake_database').value = cb.snowflake_database;
         document.getElementById('snowflake_schema').value = cb.snowflake_schema;
         document.getElementById('snowflake_role').value = cb.snowflake_role;
+    } else if (cb.data_source === 'odoo') {
+        document.getElementById('odoo_url').value = cb.odoo_url;
+        document.getElementById('odoo_db').value = cb.odoo_db;
+        document.getElementById('odoo_username').value = cb.odoo_username;
+        document.getElementById('odoo_password').value = cb.odoo_password;
+        document.getElementById('selected_module').value = cb.selected_module;
     } else {
         document.getElementById('db_host').value = cb.db_host;
         document.getElementById('db_port').value = cb.db_port;
@@ -808,17 +807,216 @@ function fillForm(cb){
         document.getElementById('db_password').value = cb.db_password;
     }
 
+    // Fill styling fields for share modal
+    if (cb.styles) {
+        const styles = JSON.parse(cb.styles);
+        document.getElementById('company_logo').value = styles.company_logo || '';
+        if (styles.company_logo) {
+            document.getElementById('logo_preview').innerHTML = `<img src="${styles.company_logo}" style="max-width: 100px; max-height: 100px;">`;
+        } else {
+            document.getElementById('logo_preview').innerHTML = '';
+        }
+        document.getElementById('nav_color').value = styles.nav_color || '#007bff';
+        document.getElementById('text_color').value = styles.text_color || '#000000';
+        document.getElementById('content_bg_color').value = styles.content_bg_color || '#ffffff';
+        document.getElementById('textarea_color').value = styles.textarea_color || '#ffffff';
+        document.getElementById('textarea_border_color').value = styles.textarea_border_color || '#cccccc';
+        document.getElementById('textarea_border_thickness').value = styles.textarea_border_thickness || '1px';
+        document.getElementById('button_color').value = styles.button_color || '#007bff';
+        document.getElementById('button_text_color').value = styles.button_text_color || '#ffffff';
+        document.getElementById('border_color').value = styles.border_color || '#007bff';
+        document.getElementById('border_thickness').value = styles.border_thickness || '2px';
+    } else {
+        // Reset to defaults if no styles
+        document.getElementById('company_logo').value = '';
+        document.getElementById('logo_preview').innerHTML = '';
+        document.getElementById('nav_color').value = '#007bff';
+        document.getElementById('text_color').value = '#000000';
+        document.getElementById('content_bg_color').value = '#ffffff';
+        document.getElementById('textarea_color').value = '#ffffff';
+        document.getElementById('textarea_border_color').value = '#cccccc';
+        document.getElementById('textarea_border_thickness').value = '1px';
+        document.getElementById('button_color').value = '#007bff';
+        document.getElementById('button_text_color').value = '#ffffff';
+        document.getElementById('border_color').value = '#007bff';
+        document.getElementById('border_thickness').value = '2px';
+    }
+
     const selectedItems = JSON.parse(cb.selected_items || "[]");
     const itemName = cb.data_source === 'google_sheets' ? 'sheet_names' : 'table_names';
     const container = document.getElementById('sheetSelection');
     container.querySelectorAll(`input[name="${itemName}"]`).forEach(input=>{
         input.checked = selectedItems.includes(input.value);
     });
+
+    currentChatbot = cb;
+    document.getElementById('shareBtn').style.display = 'inline-block';
 }
+
+function openShareModal() {
+    if (!currentChatbot) {
+        alert("Please select a chatbot first.");
+        return;
+    }
+    const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+    modal.show();
+}
+
+async function previewChatbot() {
+    try {
+        await saveStyles();
+        if (!currentChatbot.share_key) {
+            alert("Share key not found. Please save the chatbot styles first.");
+            return;
+        }
+        window.open(`${API_BASE}/shared/${currentChatbot.share_key}`, '_blank');
+    } catch (error) {
+        alert("Error during preview: " + error.message);
+    }
+}
+
+async function shareChatbot() {
+    try {
+        await saveStyles();
+        if (!currentChatbot.share_key) {
+            alert("Share key not found. Please save the chatbot styles first.");
+            return;
+        }
+        const iframeCode = `<iframe src="${API_BASE}/shared/${currentChatbot.share_key}" width="400" height="600" frameborder="0"></iframe>`;
+        document.getElementById('iframeCode').value = iframeCode;
+        const modal = new bootstrap.Modal(document.getElementById('iframeModal'));
+        modal.show();
+    } catch (error) {
+        alert("Error during share: " + error.message);
+    }
+}
+
+function copyIframeCode() {
+    const textarea = document.getElementById('iframeCode');
+    textarea.select();
+    document.execCommand('copy');
+    alert('Copied to clipboard!');
+}
+
+async function saveStyles() {
+    if (!currentChatbot) {
+        alert("No chatbot selected to save.");
+        throw new Error("No chatbot selected");
+    }
+    const formData = new URLSearchParams({
+        username: "<?= $_SESSION['username'] ?>",
+        chatbot_id: currentChatbot.id,
+        chatbot_name: currentChatbot.chatbot_name,
+        gemini_api_key: currentChatbot.gemini_api_key,
+        gemini_model: currentChatbot.gemini_model,
+        data_source: currentChatbot.data_source,
+        sheet_id: currentChatbot.sheet_id || '',
+        service_account_json: currentChatbot.service_account_json || '',
+        db_host: currentChatbot.db_host || '',
+        db_port: currentChatbot.db_port || '',
+        db_name: currentChatbot.db_name || '',
+        db_username: currentChatbot.db_username || '',
+        db_password: currentChatbot.db_password || '',
+        selected_items: currentChatbot.selected_items || '',
+        mongo_uri: currentChatbot.mongo_uri || '',
+        mongo_db_name: currentChatbot.mongo_db_name || '',
+        selected_collections: currentChatbot.selected_collections || '',
+        airtable_api_key: currentChatbot.airtable_api_key || '',
+        airtable_base_id: currentChatbot.airtable_base_id || '',
+        databricks_hostname: currentChatbot.databricks_hostname || '',
+        databricks_http_path: currentChatbot.databricks_http_path || '',
+        databricks_token: currentChatbot.databricks_token || '',
+        supabase_url: currentChatbot.supabase_url || '',
+        supabase_anon_key: currentChatbot.supabase_anon_key || '',
+        snowflake_account: currentChatbot.snowflake_account || '',
+        snowflake_user: currentChatbot.snowflake_user || '',
+        snowflake_password: currentChatbot.snowflake_password || '',
+        snowflake_warehouse: currentChatbot.snowflake_warehouse || '',
+        snowflake_database: currentChatbot.snowflake_database || '',
+        snowflake_schema: currentChatbot.snowflake_schema || '',
+        snowflake_role: currentChatbot.snowflake_role || '',
+        odoo_url: currentChatbot.odoo_url || '',
+        odoo_db: currentChatbot.odoo_db || '',
+        odoo_username: currentChatbot.odoo_username || '',
+        odoo_password: currentChatbot.odoo_password || '',
+        selected_module: currentChatbot.selected_module || '',
+        share_key: currentChatbot.share_key || '',
+        company_logo: document.getElementById('company_logo').value,
+        nav_color: document.getElementById('nav_color').value,
+        text_color: document.getElementById('text_color').value,
+        content_bg_color: document.getElementById('content_bg_color').value,
+        textarea_color: document.getElementById('textarea_color').value,
+        textarea_border_color: document.getElementById('textarea_border_color').value,
+        textarea_border_thickness: document.getElementById('textarea_border_thickness').value,
+        button_color: document.getElementById('button_color').value,
+        button_text_color: document.getElementById('button_text_color').value,
+        border_color: document.getElementById('border_color').value,
+        border_thickness: document.getElementById('border_thickness').value
+    });
+
+    const res = await fetch(`${API_BASE}/save_chatbot`, { method:'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body:formData });
+    if(res.ok) {
+        const data = await res.json();
+        if(data.share_key) {
+            currentChatbot.share_key = data.share_key; // Update share_key if generated
+        } else {
+            alert("Share key not returned from server.");
+            throw new Error("Share key missing in response");
+        }
+    } else {
+        const errorData = await res.json();
+        alert("Failed to save styles: " + (errorData.message || "Unknown error"));
+        throw new Error("Save failed");
+    }
+}
+
+// Speech Recognition
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition;
+
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        document.getElementById('user_input').value = transcript;
+    };
+
+    recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+    };
+} else {
+    console.warn('Speech recognition not supported in this browser.');
+}
+
+function startListening() {
+    if (recognition) {
+        recognition.start();
+    } else {
+        alert('Speech recognition not supported.');
+    }
+}
+
+document.getElementById('micBtn').addEventListener('click', startListening);
+
+// Handle logo upload
+document.getElementById('company_logo_upload').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('company_logo').value = e.target.result;
+            document.getElementById('logo_preview').innerHTML = `<img src="${e.target.result}" style="max-width: 100px; max-height: 100px;">`;
+        };
+        reader.readAsDataURL(file);
+    } else {
+        document.getElementById('company_logo').value = '';
+        document.getElementById('logo_preview').innerHTML = '';
+    }
+});
 </script>
 </body>
 </html>
-
-
-
-

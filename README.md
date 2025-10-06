@@ -257,16 +257,43 @@ Depending on the data source you choose, you'll need different credentials. Here
 - `frontend/public/images/` - Static images and assets
 - `frontend/includes/` - Reusable PHP components and session management
 
-## Testing
+## Unit Testing
 
-To run the backend tests:
+Unit tests are located in the `backend/tests/` directory. To create a new unit test file, save it in this directory with a name starting with `test_` (e.g., `test_my_feature.py`).
+
+### Running Unit Tests
+
+To run all unit tests:
+
+```bash
+cd backend
+python -m unittest discover tests/
+```
+
+To run a specific test file:
+
+```bash
+cd backend
+python -m unittest tests/test_data_sources.py
+```
+
+To run a specific test class or method:
+
+```bash
+cd backend
+python -m unittest tests.test_data_sources.TestDataSources.test_mssql
+```
+
+### Running the Test Script
+
+If you have a `test.py` file in the backend directory, you can run it directly:
 
 ```bash
 cd backend
 python test.py
 ```
 
-This will execute unit tests for the backend functionality.
+This will execute any tests defined in `test.py`.
 
 ## Deployment
 

@@ -22,6 +22,194 @@ import re
 import requests
 from google.auth.transport.requests import Request
 
+# System instruction for BI tool
+system_instruction = """You are a generative BI (Business Intelligence) tool. Your purpose is to create components based on user prompts and provided data.
+
+You MUST strictly output **only a single, self-contained HTML block**. Do not include `<html>`, `<head>`, or `<body>` tags. Do not write any explanations outside of the HTML.
+
+**IMPORTANT**: The following templates use `QueryUrl` or `fetch` to get data. You MUST IGNORE this. Instead, you must take the data provided in the `Spreadsheet data:` section of the prompt and embed it directly into the JavaScript of the template, for example by using `google.visualization.arrayToDataTable(...)` or by populating table rows directly.
+
+Based on the user's request, you will generate one of the following outputs using the component definitions below:
+
+1.  **If the user asks for a "graph" or "chart":**
+    -   Generate ONLY the HTML and JavaScript for a single Google Chart, adapted from the Graph Template.
+
+2.  **If the user asks for a "table":**
+    -   Generate ONLY the HTML and JavaScript for a single paginated table, adapted from the Table Template.
+
+3.  **If the user asks for an "insight" or "summary":**
+    -   Generate ONLY a `<div>` containing the textual insight, adapted from the Insight Template.
+
+4.  **If the user asks for a "dashboard":**
+   - Generate a complete dashboard layout.
+   - The dashboard MUST contain:
+     - A flexbox container with **four** metric cards at the top.
+     - A container with **two** different Google Charts.
+     - A container with **two** different paginated tables.
+
+--- COMPONENT DEFINITIONS ---
+
+
+**Insight Template:**
+<div class="d-flex justify-content-center my-4">
+    <!-- Glassmorphic card for insight display -->
+    <div class="insight-glass text-center shadow-sm rounded">
+        <!-- Label or description -->
+        <div class="insight-text mb-3">
+            <span class="fw-semibold text-dark">Highest Value</span> is:
+        </div>
+        <!-- Main value -->
+        <div class="insight-number mb-3">4,567</div>
+        <!-- Additional info or timestamp -->
+        <div class="small text-muted">Updated: 9/30/2025, 10:00:00 AM</div>
+    </div>
+</div>
+
+<style>
+    /* Glass card styling for insight with more padding */
+    .insight-glass {
+        background: rgba(255, 255, 255, 0.65); /* semi-transparent white */
+        backdrop-filter: blur(12px);          /* blur effect */
+        border-radius: 1rem;                  /* rounded corners */
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08); /* soft shadow */
+        max-width: 400px;                     /* max width for card */
+        padding: 3rem 3.5rem;                 /* increased internal padding */
+    }
+
+    /* Description text inside the card */
+    .insight-text {
+        font-size: 1.2rem;
+        color: #444;
+    }
+
+    /* Large numeric value */
+    .insight-number {
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: #111;
+    }
+</style>
+
+
+
+**Table Template:**
+<!-- Bootstrap CSS (needed for table + pagination styles) -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<div class="glass-card mt-4">
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 1rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin: auto;
+            width: 100%;
+            max-width: 1200px;
+            overflow-x: auto;
+        }
+        thead th {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(6px);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+    </style>
+
+    <h2 class="mb-4 text-center fw-bold">📊 Table Title</h2>
+    <table id="sheetTable_UNIQUE_ID" class="table table-hover table-bordered align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>#</th>
+                <th>Column A</th>
+                <th>Column B</th>
+                <th>Column C</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>1</td><td>A1</td><td>B1</td><td>C1</td></tr>
+            <tr><td>2</td><td>A2</td><td>B2</td><td>C2</td></tr>
+            <tr><td>3</td><td>A3</td><td>B3</td><td>C3</td></tr>
+            <tr><td>4</td><td>A4</td><td>B4</td><td>C4</td></tr>
+            <tr><td>5</td><td>A5</td><td>B5</td><td>C5</td></tr>
+            <tr><td>6</td><td>A6</td><td>B6</td><td>C6</td></tr>
+            <tr><td>7</td><td>A7</td><td>B7</td><td>C7</td></tr>
+            <tr><td>8</td><td>A8</td><td>B8</td><td>C8</td></tr>
+            <tr><td>9</td><td>A9</td><td>B9</td><td>C9</td></tr>
+            <tr><td>10</td><td>A10</td><td>B10</td><td>C10</td></tr>
+        </tbody>
+    </table>
+    <!-- Pagination will be injected here -->
+    <nav id="paginationContainer" class="d-flex justify-content-center mt-3"></nav>
+</div>
+
+<script>
+(function() {
+    const tableId = 'sheetTable_UNIQUE_ID';
+    const rowsPerPage = 5;
+    const table = document.getElementById(tableId);
+    if (!table) return;
+
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const pageCount = Math.ceil(rows.length / rowsPerPage);
+    const paginationContainer = document.getElementById('paginationContainer');
+    let currentPage = 1;
+
+    function showPage(page) {
+        currentPage = page;
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        rows.forEach((row, index) => {
+            row.style.display = (index >= start && index < end) ? '' : 'none';
+        });
+        updatePaginationUI();
+    }
+
+    function updatePaginationUI() {
+        let paginationHTML = `
+            <ul class="pagination pagination-md">
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}">« Prev</a>
+                </li>
+        `;
+        for (let i = 1; i <= pageCount; i++) {
+            paginationHTML += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
+        }
+        paginationHTML += `
+                <li class="page-item ${currentPage === pageCount ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}">Next »</a>
+                </li>
+            </ul>
+        `;
+        paginationContainer.innerHTML = paginationHTML;
+
+        paginationContainer.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                const page = parseInt(link.dataset.page);
+                if (page >= 1 && page <= pageCount) {
+                    showPage(page);
+                }
+            });
+        });
+    }
+
+    if (rows.length > 0) {
+        showPage(1);
+    }
+})();
+</script>
+
+
+"""
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
@@ -95,7 +283,30 @@ def init_db():
             airtable_base_id TEXT,
             databricks_hostname TEXT,
             databricks_http_path TEXT,
-            databricks_token TEXT
+            databricks_token TEXT,
+            supabase_url TEXT,
+            supabase_anon_key TEXT,
+            snowflake_account TEXT,
+            snowflake_user TEXT,
+            snowflake_password TEXT,
+            snowflake_warehouse TEXT,
+            snowflake_database TEXT,
+            snowflake_schema TEXT,
+            snowflake_role TEXT,
+            share_key TEXT UNIQUE,
+            company_logo TEXT,
+            nav_color TEXT,
+            text_color TEXT,
+            content_bg_color TEXT,
+            textarea_color TEXT,
+            textarea_border_color TEXT,
+            textarea_border_thickness TEXT,
+            button_color TEXT,
+            button_text_color TEXT,
+            border_color TEXT,
+            border_thickness TEXT,
+            nav_border_color TEXT,
+            nav_border_thickness TEXT
         )
     """)
 
@@ -111,137 +322,7 @@ def init_db():
             FOREIGN KEY (username) REFERENCES users (username)
         )
     """)
-    # Add missing columns if they don't exist
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN mongo_uri TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN mongo_db_name TEXT;")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN selected_collections TEXT;")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN airtable_api_key TEXT;")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN airtable_base_id TEXT;")
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_hostname TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_http_path TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN databricks_token TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN supabase_url TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN supabase_anon_key TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_account TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_user TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_password TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_warehouse TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_database TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_schema TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN snowflake_role TEXT;")
-    except sqlite3.OperationalError:
-        pass
-
-    # Add share and styling columns
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN share_key TEXT UNIQUE;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN company_logo TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN nav_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN text_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN content_bg_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN textarea_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN textarea_border_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN textarea_border_thickness TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN button_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN button_text_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN border_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN border_thickness TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN nav_border_color TEXT;")
-    except sqlite3.OperationalError:
-        pass
-    try:
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN nav_border_thickness TEXT;")
-    except sqlite3.OperationalError:
-        pass
+    
 
     conn.commit()
     conn.close()
@@ -565,13 +646,27 @@ def set_credentials():
     elif data_source == 'neo4j':
         try:
             uri = CONFIG['neo4j_uri']
+            # Change URI scheme from neo4j+s to neo4j+ssc for self-signed certs
+            if uri.startswith("neo4j+s://"):
+                uri = uri.replace("neo4j+s://", "neo4j+ssc://")
+            elif uri.startswith("bolt+s://"):
+                uri = uri.replace("bolt+s://", "bolt+ssc://")
+
             username = CONFIG['neo4j_username']
             password = CONFIG['neo4j_password']
             database = CONFIG['neo4j_db_name']
+            # Override database name to 'neo4j' for Aura default if needed
+            if database != 'neo4j':
+                logging.warning(f"Overriding Neo4j database name from {database} to 'neo4j' for Aura compatibility")
+                database = 'neo4j'
             CONFIG['db_name'] = database  # Set for consistency in other parts
             logging.info(f"Neo4j connection: uri={uri}, username={username}, database={database}")
             logging.info(f"Received neo4j_db_name in set_credentials: {database}")
-            driver = GraphDatabase.driver(uri, auth=(username, password))
+            # Remove encrypted and trust parameters for URI scheme neo4j+ssc
+            driver = GraphDatabase.driver(
+                uri,
+                auth=(username, password)
+            )
             db_conn = driver
             with driver.session(database=database) as session:
                 result = session.run("MATCH (n) RETURN DISTINCT labels(n) AS labels")
@@ -702,6 +797,32 @@ def set_credentials():
         except Exception as e:
             return jsonify({'error': f'Snowflake connection failed: {str(e)}'}), 400
 
+    elif data_source == 'odoo':
+        try:
+            module = CONFIG.get('selected_module')
+            creds = {
+                'url': CONFIG['odoo_url'],
+                'db': CONFIG['odoo_db'],
+                'username': CONFIG['odoo_username'],
+                'password': CONFIG['odoo_password']
+            }
+            db_service = DatabaseService()
+            if module == 'CRM':
+                model = 'res.partner'
+            elif module == 'Inventory':
+                model = 'product.product'
+            elif module == 'Sales':
+                model = 'sale.order'
+            else:
+                return jsonify({'error': 'Invalid module'}), 400
+            results = db_service.fetch_from_odoo(creds, model)
+            if isinstance(results, dict) and results.get('status') == 'error':
+                return jsonify({'error': results['message']}), 400
+            items = [str(record['id']) + ' - ' + (record.get('name') or record.get('display_name') or 'No name') for record in results]
+            return jsonify({'type': 'items', 'items': items})
+        except Exception as e:
+            return jsonify({'error': f'Odoo connection failed: {str(e)}'}), 400
+
     else:
         return jsonify({'error': 'Invalid data source'}), 400
 
@@ -817,7 +938,12 @@ def chat():
             'snowflake_warehouse': cb.get('snowflake_warehouse'),
             'snowflake_database': cb.get('snowflake_database'),
             'snowflake_schema': cb.get('snowflake_schema'),
-            'snowflake_role': cb.get('snowflake_role')
+            'snowflake_role': cb.get('snowflake_role'),
+            'odoo_url': cb.get('odoo_url'),
+            'odoo_db': cb.get('odoo_db'),
+            'odoo_username': cb.get('odoo_username'),
+            'odoo_password': cb.get('odoo_password'),
+            'selected_module': cb.get('selected_module')
         }
         selected_tables = json.loads(cb.get('selected_tables') or '[]')
         worksheets = []  # Reset
@@ -834,6 +960,12 @@ def chat():
         return jsonify({'response': 'Select at least one item first.'})
 
     user_input = request.json.get('message')
+
+    # Parse limit from user input, e.g., "show me 5 rows"
+    limit = None
+    match = re.search(r'show me (\d+) rows?', user_input, re.IGNORECASE)
+    if match:
+        limit = int(match.group(1))
 
     if data_source == 'google_sheets':
         try:
@@ -854,12 +986,14 @@ def chat():
         for sheet_name in CONFIG['selected_sheets']:
             try:
                 worksheet = spreadsheet.worksheet(sheet_name)
-                records = worksheet.get_all_records()
+                records = worksheet.get_all_records()[:1000]
+                if limit:
+                    records = records[:limit]
                 all_data[sheet_name] = records
             except Exception as e:
                 logging.error(f"Failed to fetch data from sheet {sheet_name} using gspread: {str(e)}")
                 return jsonify({'response': f'Failed to fetch data from sheet {sheet_name} using gspread.'})
-        data_desc = "Spreadsheet data (gspread)"
+        data_desc = "Spreadsheet data (gspread, limited to 1000 rows per sheet)"
     elif data_source == 'neo4j':
         all_data = {}
         driver = db_conn
@@ -867,6 +1001,8 @@ def chat():
             for label in selected_tables:
                 result = session.run(f"MATCH (n:{label}) RETURN n")
                 records = [dict(record['n']) for record in result]
+                if limit:
+                    records = records[:limit]
                 all_data[label] = records
         data_desc = "Graph data"
     elif data_source == 'mongodb':
@@ -874,6 +1010,8 @@ def chat():
         for collection in selected_tables:
             coll = db_conn[collection]
             documents = list(coll.find())
+            if limit:
+                documents = documents[:limit]
             # Convert ObjectId and datetime to string for JSON serialization
             for doc in documents:
                 for key, value in doc.items():
@@ -991,6 +1129,31 @@ def chat():
                 return jsonify({'response': f'Error fetching from {table}: {results["message"]}'})
             all_data[table] = results
         data_desc = "Snowflake data"
+    elif data_source == 'odoo':
+        all_data = {}
+        creds = {
+            'url': CONFIG['odoo_url'],
+            'db': CONFIG['odoo_db'],
+            'username': CONFIG['odoo_username'],
+            'password': CONFIG['odoo_password']
+        }
+        module = CONFIG.get('selected_module')
+        if module == 'CRM':
+            model = 'res.partner'
+        elif module == 'Inventory':
+            model = 'product.product'
+        elif module == 'Sales':
+            model = 'sale.order'
+        else:
+            return jsonify({'response': 'Invalid module'})
+        db_service = DatabaseService()
+        results = db_service.fetch_from_odoo(creds, model)
+        if isinstance(results, dict) and results.get('status') == 'error':
+            return jsonify({'response': f'Error fetching from {model}: {results["message"]}'})
+        # Filter by selected_ids
+        selected_ids = [int(item.split(' - ')[0]) for item in selected_tables]
+        all_data[model] = [record for record in results if record['id'] in selected_ids]
+        data_desc = "Odoo data"
     else:
         all_data = {}
         for table in selected_tables:
@@ -1002,7 +1165,7 @@ def chat():
             cursor.close()
         data_desc = "Database data"
 
-    prompt = f"You are an assistant. {data_desc}: {json.dumps(all_data, indent=2, default=str)}\nUser: {user_input}\nAnswer:"
+    prompt = system_instruction + f"\nSpreadsheet data: {json.dumps(all_data, indent=2, default=str)}\nUser: {user_input}"
 
     if gemini_client is None:
         return jsonify({'response': 'Gemini client not initialized. Please set credentials first.'})
@@ -1118,6 +1281,9 @@ def save_chatbot():
             snowflake_database = request.form.get('snowflake_database')
             snowflake_schema = request.form.get('snowflake_schema')
             snowflake_role = request.form.get('snowflake_role')
+        elif data_source == 'odoo':
+            selected_tables = json.dumps(selected_items)
+            # Odoo fields are handled in chatbot_data
         else:
             selected_tables = json.dumps(selected_items)
             db_host = request.form.get('db_host')
@@ -1131,6 +1297,7 @@ def save_chatbot():
         share_key = request.form.get('share_key')
         if not share_key:
             share_key = secrets.token_urlsafe(16)
+            logging.info(f"Generated new share_key: {share_key}")
 
         chatbot_data = {
             'id': request.form['chatbot_id'],
@@ -1165,6 +1332,11 @@ def save_chatbot():
             'snowflake_database': snowflake_database,
             'snowflake_schema': snowflake_schema,
             'snowflake_role': snowflake_role,
+            'odoo_url': request.form.get('odoo_url'),
+            'odoo_db': request.form.get('odoo_db'),
+            'odoo_username': request.form.get('odoo_username'),
+            'odoo_password': request.form.get('odoo_password'),
+            'selected_module': request.form.get('selected_module'),
             'share_key': share_key,
             'company_logo': request.form.get('company_logo'),
             'nav_color': request.form.get('nav_color'),
@@ -1182,7 +1354,8 @@ def save_chatbot():
         }
         db_service = DatabaseService()
         db_service.save_chatbot(chatbot_data)
-        return jsonify({"success": True})
+        # Return share_key in response
+        return jsonify({"success": True, "share_key": share_key})
     except Exception as e:
         # Logging: Log exceptions
         logging.error(f"Error saving chatbot: {str(e)}")
@@ -1218,6 +1391,7 @@ def list_chatbots():
 # --- Shared Chatbot ---
 @main_bp.route('/shared/<share_key>', methods=['GET'])
 def shared_chatbot(share_key):
+    logging.info(f"Shared chatbot requested with share_key: {share_key}")
     conn = sqlite3.connect(DB_FILE)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -1225,7 +1399,10 @@ def shared_chatbot(share_key):
     row = cursor.fetchone()
     conn.close()
     if not row:
+        logging.warning(f"Chatbot not found for share_key: {share_key}")
         return "Chatbot not found", 404
+
+    logging.info(f"Chatbot found for share_key: {share_key}, chatbot_name: {row['chatbot_name']}")
 
     cb = dict(row)
     # Apply default styles if not set
@@ -1298,7 +1475,7 @@ def shared_chatbot(share_key):
         </div>
         <script>
             const API_BASE = "{Config().FRONTEND_URL or 'http://localhost:5001'}";
-            const chatbot_id = "{cb['id']}";
+            const shareKey = "{share_key}";
 
             async function sendMessage() {{
                 const input = document.getElementById('user_input').value;
@@ -1309,7 +1486,7 @@ def shared_chatbot(share_key):
                 const res = await fetch(`${{API_BASE}}/chat`, {{
                     method:'POST',
                     headers:{{'Content-Type':'application/json'}},
-                    body: JSON.stringify({{message: input, share_key: '{share_key}'}})
+                    body: JSON.stringify({{message: input, share_key: shareKey}})
                 }});
                 const data = await res.json();
                 chatDiv.innerHTML += `<p class="bot"><b>Bot:</b> ${{data.response}}</p>`;

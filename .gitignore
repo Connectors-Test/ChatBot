@@ -1,2 +1,4 @@
 chatbots.db
 /venv
+backend/tests/test_data_sources.py
+.env
