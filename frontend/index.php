@@ -311,7 +311,7 @@ function checkUnlocked() {
             supabaseFields.style.display = 'none';
             snowflakeFields.style.display = 'none';
             odooFields.style.display = 'none';
-        } else if (dataSource === 'mysql' || dataSource === 'postgresql') {
+        } else if (dataSource === 'mssql') {
             googleFields.style.display = 'none';
             dbFields.style.display = 'none';
             mssqlFields.style.display = 'block';
