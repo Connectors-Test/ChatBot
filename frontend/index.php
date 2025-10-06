@@ -285,160 +285,177 @@ function checkUnlocked() {
     return isUnlocked;
 }
 
-// Modified onDataSourceChange to show modal if not unlocked
-function onDataSourceChange() {
-    const dataSource = document.getElementById('data_source').value;
-    const googleFields = document.getElementById('googleSheetsFields');
-    const dbFields = document.getElementById('dbFields');
-    const mssqlFields = document.getElementById('mssqlFields');
-    const neo4jFields = document.getElementById('neo4jFields');
-    const mongodbFields = document.getElementById('mongodbFields');
-    const oracleFields = document.getElementById('oracleFields');
-    const airtableFields = document.getElementById('airtableFields');
-    const databricksFields = document.getElementById('databricksFields');
-    const supabaseFields = document.getElementById('supabaseFields');
-    const snowflakeFields = document.getElementById('snowflakeFields');
-    const odooFields = document.getElementById('odooFields');
-    if (dataSource === 'google_sheets') {
-        googleFields.style.display = 'block';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-        odooFields.style.display = 'none';
-    } else if (dataSource === 'mssql') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'block';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-        odooFields.style.display = 'none';
-    } else if (dataSource === 'neo4j') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'block';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-        odooFields.style.display = 'none';
-    } else if (dataSource === 'mongodb') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'block';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-        odooFields.style.display = 'none';
-    } else if (dataSource === 'oracle') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'block';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-        odooFields.style.display = 'none';
-    } else if (dataSource === 'airtable') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'block';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-        odooFields.style.display = 'none';
-    } else if (dataSource === 'databricks') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        databricksFields.style.display = 'block';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-        odooFields.style.display = 'none';
-    } else if (dataSource === 'supabase') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        databricksFields.style.display = 'none';
-        supabaseFields.style.display = 'block';
-        snowflakeFields.style.display = 'none';
-        odooFields.style.display = 'none';
-    } else if (dataSource === 'snowflake') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        databricksFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'block';
-        odooFields.style.display = 'none';
-    } else if (dataSource === 'odoo') {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'none';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        databricksFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-        odooFields.style.display = 'block';
-    } else {
-        googleFields.style.display = 'none';
-        dbFields.style.display = 'block';
-        mssqlFields.style.display = 'none';
-        neo4jFields.style.display = 'none';
-        mongodbFields.style.display = 'none';
-        oracleFields.style.display = 'none';
-        airtableFields.style.display = 'none';
-        supabaseFields.style.display = 'none';
-        snowflakeFields.style.display = 'none';
-        odooFields.style.display = 'none';
-        if (dataSource === 'mysql') {
-            document.getElementById('db_port').value = '3306';
-        } else if (dataSource === 'postgresql') {
-            document.getElementById('db_port').value = '5432';
+    // Modified onDataSourceChange to show modal if not unlocked
+    function onDataSourceChange() {
+        const dataSource = document.getElementById('data_source').value;
+        const googleFields = document.getElementById('googleSheetsFields');
+        const dbFields = document.getElementById('dbFields');
+        const mssqlFields = document.getElementById('mssqlFields');
+        const neo4jFields = document.getElementById('neo4jFields');
+        const mongodbFields = document.getElementById('mongodbFields');
+        const oracleFields = document.getElementById('oracleFields');
+        const airtableFields = document.getElementById('airtableFields');
+        const databricksFields = document.getElementById('databricksFields');
+        const supabaseFields = document.getElementById('supabaseFields');
+        const snowflakeFields = document.getElementById('snowflakeFields');
+        const odooFields = document.getElementById('odooFields');
+        if (dataSource === 'google_sheets') {
+            googleFields.style.display = 'block';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'mysql' || dataSource === 'postgresql') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'block';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'neo4j') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'block';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'mongodb') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'block';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'oracle') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'block';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'airtable') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'block';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'databricks') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'block';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'supabase') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'block';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'snowflake') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'block';
+            odooFields.style.display = 'none';
+        } else if (dataSource === 'odoo') {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'none';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'block';
+        } else {
+            googleFields.style.display = 'none';
+            dbFields.style.display = 'block';
+            mssqlFields.style.display = 'none';
+            neo4jFields.style.display = 'none';
+            mongodbFields.style.display = 'none';
+            oracleFields.style.display = 'none';
+            airtableFields.style.display = 'none';
+            databricksFields.style.display = 'none';
+            supabaseFields.style.display = 'none';
+            snowflakeFields.style.display = 'none';
+            odooFields.style.display = 'none';
+            if (dataSource === 'mysql') {
+                document.getElementById('db_port').value = '3306';
+            } else if (dataSource === 'postgresql') {
+                document.getElementById('db_port').value = '5432';
+            }
+        }
+
+        // Show modal if not unlocked and not Google Sheets
+        console.log('onDataSourceChange: dataSource =', dataSource, 'isUnlocked =', checkUnlocked());
+        if (!checkUnlocked() && dataSource !== 'google_sheets') {
+            console.log('Showing modal for datasource selection');
+            const modal = new bootstrap.Modal(document.getElementById('jotformModal'));
+            modal.show();
         }
     }
 
-    // Show modal if not unlocked and not Google Sheets
-    console.log('onDataSourceChange: dataSource =', dataSource, 'isUnlocked =', checkUnlocked());
-    if (!checkUnlocked() && dataSource !== 'google_sheets') {
-        console.log('Showing modal for datasource selection');
-        const modal = new bootstrap.Modal(document.getElementById('jotformModal'));
-        modal.show();
-    }
-}
+    // Add event listener for modal close to rollback datasource to google_sheets
+    const jotformModal = document.getElementById('jotformModal');
+    jotformModal.addEventListener('hidden.bs.modal', function () {
+        const dataSourceSelect = document.getElementById('data_source');
+        if (dataSourceSelect.value !== 'google_sheets') {
+            dataSourceSelect.value = 'google_sheets';
+            onDataSourceChange();
+        }
+    });
 
 // Modified saveChatbot to check count and show modal if needed
 async function saveChatbot() {
@@ -670,7 +687,18 @@ async function sendMessage() {
         body: JSON.stringify({message: input})
     });
     const data = await res.json();
-    chatDiv.innerHTML += `<p class="bot"><b>Bot:</b> ${data.response}</p>`;
+
+    // Check if response contains HTML tags (simple check)
+    const isHTML = /<\/?[a-z][\s\S]*>/i.test(data.response);
+
+    if (isHTML) {
+        // Insert raw HTML inside a div container
+        chatDiv.innerHTML += `<div class="bot">${data.response}</div>`;
+    } else {
+        // Insert as plain text inside a paragraph
+        chatDiv.innerHTML += `<p class="bot"><b>Bot:</b> ${data.response}</p>`;
+    }
+
     chatDiv.scrollTop = chatDiv.scrollHeight;
     document.getElementById('user_input').value = '';
 }
