@@ -176,6 +176,8 @@
             renderCredentialFields(dataSourceSelect.value);
             tableSelectionContainer.style.display = 'none';
             tableSelectionDiv.innerHTML = '';
+            // Load tables or sheets for the selected data source
+            fetchTablesForDataSource(dataSourceSelect.value);
         });
 
         function renderCredentialFields(dataSource) {

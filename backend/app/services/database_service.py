@@ -8,6 +8,7 @@ from supabase import create_client, Client
 import snowflake.connector
 from neo4j import GraphDatabase
 import xmlrpc.client
+import ssl
 import os
 
 
@@ -317,12 +318,13 @@ class DatabaseService:
             cur = None
 
             try:
-                # Connect with SSL verification disabled for self-signed certificates and timeout
+                # Connect with system CA or custom CA file for SSL verification
+                ssl_ctx = ssl.create_default_context()
                 conn = sql.connect(
                     server_hostname=creds['server_hostname'],
                     http_path=creds['http_path'],
                     access_token=creds['access_token'],
-                    insecure=True,
+                    _tls_ctx=ssl_ctx,
                     timeout=60
                 )
                 cur = conn.cursor()

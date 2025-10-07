@@ -7,6 +7,7 @@ import pymysql
 import psycopg2
 from neo4j import GraphDatabase
 from pymongo import MongoClient
+import databricks.sql
 import oracledb
 import logging
 import smtplib
@@ -651,6 +652,9 @@ def set_credentials():
                 uri = uri.replace("neo4j+s://", "neo4j+ssc://")
             elif uri.startswith("bolt+s://"):
                 uri = uri.replace("bolt+s://", "bolt+ssc://")
+            # For local single instance, change neo4j:// to bolt://
+            elif uri.startswith("neo4j://") and "localhost" in uri:
+                uri = uri.replace("neo4j://", "bolt://")
 
             username = CONFIG['neo4j_username']
             password = CONFIG['neo4j_password']
