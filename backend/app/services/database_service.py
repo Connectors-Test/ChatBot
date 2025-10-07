@@ -68,6 +68,11 @@ class DatabaseService:
                 snowflake_database TEXT,
                 snowflake_schema TEXT,
                 snowflake_role TEXT,
+                odoo_url TEXT;
+                odoo_db TEXT;
+                odoo_username TEXT;
+                odoo_password TEXT;
+                selected_module TEXT;
                 share_key TEXT UNIQUE,
                 company_logo TEXT,
                 nav_color TEXT,
@@ -85,12 +90,6 @@ class DatabaseService:
             )
         """)
 
-        # Add Odoo columns if not exists
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_url TEXT;")
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_db TEXT;")
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_username TEXT;")
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS odoo_password TEXT;")
-        cursor.execute("ALTER TABLE chatbots ADD COLUMN IF NOT EXISTS selected_module TEXT;")
 
         conn.commit()
         conn.close()
@@ -116,8 +115,8 @@ class DatabaseService:
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            INSERT OR REPLACE INTO chatbots (id, username, chatbot_name, gemini_api_key, gemini_model, data_source, sheet_id, selected_sheets, service_account_json, db_host, db_port, db_name, db_username, db_password, selected_tables, mongo_uri, mongo_db_name, selected_collections, airtable_api_key, airtable_base_id, databricks_hostname, databricks_http_path, databricks_token, supabase_url, supabase_anon_key, snowflake_account, snowflake_user, snowflake_password, snowflake_warehouse, snowflake_database, snowflake_schema, snowflake_role, company_logo, nav_color, text_color, content_bg_color, textarea_color, textarea_border_color, textarea_border_thickness, button_color, button_text_color, border_color, border_thickness, nav_border_color, nav_border_thickness, share_key)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO chatbots (id, username, chatbot_name, gemini_api_key, gemini_model, data_source, sheet_id, selected_sheets, service_account_json, db_host, db_port, db_name, db_username, db_password, selected_tables, mongo_uri, mongo_db_name, selected_collections, airtable_api_key, airtable_base_id, databricks_hostname, databricks_http_path, databricks_token, supabase_url, supabase_anon_key, snowflake_account, snowflake_user, snowflake_password, snowflake_warehouse, snowflake_database, snowflake_schema, snowflake_role, share_key, company_logo, nav_color, text_color, content_bg_color, textarea_color, textarea_border_color, textarea_border_thickness, button_color, button_text_color, border_color, border_thickness, nav_border_color, nav_border_thickness, odoo_url, odoo_db, odoo_username, odoo_password, selected_module)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             chatbot_data['id'],
             chatbot_data['username'],
@@ -151,6 +150,7 @@ class DatabaseService:
             chatbot_data.get('snowflake_database'),
             chatbot_data.get('snowflake_schema'),
             chatbot_data.get('snowflake_role'),
+            chatbot_data.get('share_key'),
             chatbot_data.get('company_logo'),
             chatbot_data.get('nav_color'),
             chatbot_data.get('text_color'),
@@ -164,7 +164,11 @@ class DatabaseService:
             chatbot_data.get('border_thickness'),
             chatbot_data.get('nav_border_color'),
             chatbot_data.get('nav_border_thickness'),
-            chatbot_data.get('share_key')
+            chatbot_data.get('odoo_url'),
+            chatbot_data.get('odoo_db'),
+            chatbot_data.get('odoo_username'),
+            chatbot_data.get('odoo_password'),
+            chatbot_data.get('selected_module')
         ))
         conn.commit()
         conn.close()

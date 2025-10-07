@@ -307,9 +307,36 @@ def init_db():
             border_color TEXT,
             border_thickness TEXT,
             nav_border_color TEXT,
-            nav_border_thickness TEXT
+            nav_border_thickness TEXT,
+            odoo_url TEXT,
+            odoo_db TEXT,
+            odoo_username TEXT,
+            odoo_password TEXT,
+            selected_module TEXT
         )
     """)
+
+    # Add Odoo columns if not exists (for existing databases)
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN odoo_url TEXT;")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN odoo_db TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN odoo_username TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN odoo_password TEXT;")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute("ALTER TABLE chatbots ADD COLUMN selected_module TEXT;")
+    except sqlite3.OperationalError:
+        pass
 
     # Create password reset tokens table
     cursor.execute("""
@@ -829,6 +856,34 @@ def set_credentials():
 
     else:
         return jsonify({'error': 'Invalid data source'}), 400
+
+# --- Load sheets for Google Sheets ---
+@main_bp.route('/load_sheets', methods=['POST'])
+def load_sheets():
+    data = request.json
+    sheet_id = data.get('sheet_id')
+    service_account_json_str = data.get('service_account_json')
+    if not sheet_id or not service_account_json_str:
+        return jsonify({'error': 'sheet_id and service_account_json required'}), 400
+    try:
+        service_json = json.loads(service_account_json_str)
+        # Validate required keys for service account
+        required_keys = ['type', 'project_id', 'private_key_id', 'private_key', 'client_email', 'client_id', 'auth_uri', 'token_uri', 'auth_provider_x509_cert_url', 'client_x509_cert_url']
+        missing_keys = [key for key in required_keys if key not in service_json]
+        if missing_keys:
+            return jsonify({'error': f'Invalid Service Account JSON: missing keys {missing_keys}'}), 400
+        if service_json.get('type') != 'service_account':
+            return jsonify({'error': 'Invalid Service Account JSON: type must be service_account'}), 400
+        creds = Credentials.from_service_account_info(service_json, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
+        gc = gspread.authorize(creds)
+        spreadsheet = gc.open_by_key(sheet_id)
+        sheets = [ws.title for ws in spreadsheet.worksheets()]
+        return jsonify({'sheets': sheets})
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Invalid Service Account JSON: not valid JSON'}), 400
+    except Exception as e:
+        logging.error(f"Failed to load sheets: {str(e)}")
+        return jsonify({'error': 'Failed to load sheets'}), 400
 
 # --- Set selected items ---
 @main_bp.route('/set_items', methods=['POST'])

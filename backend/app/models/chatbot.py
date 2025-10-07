@@ -5,7 +5,8 @@ class Chatbot:
                  db_name=None, db_username=None, db_password=None,
                  selected_tables=None, mongo_uri=None, mongo_db_name=None,
                  selected_collections=None, airtable_api_key=None, airtable_base_id=None,
-                 databricks_hostname=None, databricks_http_path=None, databricks_token=None):
+                 databricks_hostname=None, databricks_http_path=None, databricks_token=None,
+                 odoo_url=None, odoo_db=None, odoo_username=None, odoo_password=None, selected_module=None):
         self.id = id
         self.username = username
         self.chatbot_name = chatbot_name
@@ -29,6 +30,11 @@ class Chatbot:
         self.databricks_hostname = databricks_hostname
         self.databricks_http_path = databricks_http_path
         self.databricks_token = databricks_token
+        self.odoo_url = odoo_url
+        self.odoo_db = odoo_db
+        self.odoo_username = odoo_username
+        self.odoo_password = odoo_password
+        self.selected_module = selected_module
 
     def to_dict(self):
         return {
@@ -54,7 +60,12 @@ class Chatbot:
             'airtable_base_id': self.airtable_base_id,
             'databricks_hostname': self.databricks_hostname,
             'databricks_http_path': self.databricks_http_path,
-            'databricks_token': self.databricks_token
+            'databricks_token': self.databricks_token,
+            'odoo_url': self.odoo_url,
+            'odoo_db': self.odoo_db,
+            'odoo_username': self.odoo_username,
+            'odoo_password': self.odoo_password,
+            'selected_module': self.selected_module
         }
 
     @classmethod
@@ -82,5 +93,10 @@ class Chatbot:
             airtable_base_id=data.get('airtable_base_id'),
             databricks_hostname=data.get('databricks_hostname'),
             databricks_http_path=data.get('databricks_http_path'),
-            databricks_token=data.get('databricks_token')
+            databricks_token=data.get('databricks_token'),
+            odoo_url=data.get('odoo_url'),
+            odoo_db=data.get('odoo_db'),
+            odoo_username=data.get('odoo_username'),
+            odoo_password=data.get('odoo_password'),
+            selected_module=data.get('selected_module')
         )
