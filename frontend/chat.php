@@ -111,6 +111,7 @@
                         <option value="gemini-1.5-flash" selected>gemini-1.5-flash</option>
                         <option value="gemini-1.5-pro">gemini-1.5-pro</option>
                         <option value="gemini-pro">gemini-pro</option>
+                        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
                     </select>
                 </div>
 
@@ -176,8 +177,6 @@
             renderCredentialFields(dataSourceSelect.value);
             tableSelectionContainer.style.display = 'none';
             tableSelectionDiv.innerHTML = '';
-            // Load tables or sheets for the selected data source
-            fetchTablesForDataSource(dataSourceSelect.value);
         });
 
         function renderCredentialFields(dataSource) {
@@ -188,146 +187,338 @@
                         <label for="sheetId" class="form-label">Google Sheet ID</label>
                         <input type="text" class="form-control" id="sheetId" required />
                     </div>
-                    <div class="mb-3">
-                        <label for="serviceAccountJson" class="form-label">Service Account JSON</label>
-                        <textarea class="form-control" id="serviceAccountJson" rows="5" required></textarea>
-                    </div>
-                    <button type="button" class="btn btn-secondary mb-3" id="loadSheetsBtn">Load Sheets</button>
+                <div class="mb-3">
+                    <label for="serviceAccountJson" class="form-label">Service Account JSON</label>
+                    <textarea class="form-control" id="serviceAccountJson" rows="5" required></textarea>
+                </div>
+                <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
                 `;
-                document.getElementById('loadSheetsBtn').addEventListener('click', loadSheets);
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+            } else if(dataSource === 'mysql') {
+                credentialFieldsDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label for="dbHost" class="form-label">DB Host</label>
+                        <input type="text" class="form-control" id="dbHost" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbPort" class="form-label">DB Port</label>
+                        <input type="number" class="form-control" id="dbPort" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbUsername" class="form-label">DB Username</label>
+                        <input type="text" class="form-control" id="dbUsername" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbPassword" class="form-label">DB Password</label>
+                        <input type="password" class="form-control" id="dbPassword" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbName" class="form-label">DB Name</label>
+                        <input type="text" class="form-control" id="dbName" required />
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
+                `;
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+            } else if(dataSource === 'postgresql') {
+                credentialFieldsDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label for="dbHost" class="form-label">DB Host</label>
+                        <input type="text" class="form-control" id="dbHost" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbPort" class="form-label">DB Port</label>
+                        <input type="number" class="form-control" id="dbPort" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbUsername" class="form-label">DB Username</label>
+                        <input type="text" class="form-control" id="dbUsername" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbPassword" class="form-label">DB Password</label>
+                        <input type="password" class="form-control" id="dbPassword" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbName" class="form-label">DB Name</label>
+                        <input type="text" class="form-control" id="dbName" required />
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
+                `;
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+            } else if(dataSource === 'mssql') {
+                credentialFieldsDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label for="dbHost" class="form-label">DB Host</label>
+                        <input type="text" class="form-control" id="dbHost" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbPort" class="form-label">DB Port</label>
+                        <input type="number" class="form-control" id="dbPort" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbUsername" class="form-label">DB Username</label>
+                        <input type="text" class="form-control" id="dbUsername" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbPassword" class="form-label">DB Password</label>
+                        <input type="password" class="form-control" id="dbPassword" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbName" class="form-label">DB Name</label>
+                        <input type="text" class="form-control" id="dbName" required />
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
+                `;
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+            } else if(dataSource === 'neo4j') {
+                credentialFieldsDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label for="neo4jUri" class="form-label">Neo4j URI</label>
+                        <input type="text" class="form-control" id="neo4jUri" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="neo4jUsername" class="form-label">Neo4j Username</label>
+                        <input type="text" class="form-control" id="neo4jUsername" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="neo4jPassword" class="form-label">Neo4j Password</label>
+                        <input type="password" class="form-control" id="neo4jPassword" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="neo4jDbName" class="form-label">Neo4j Database Name</label>
+                        <input type="text" class="form-control" id="neo4jDbName" required />
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
+                `;
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+            } else if(dataSource === 'mongodb') {
+                credentialFieldsDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label for="mongoUri" class="form-label">MongoDB URI</label>
+                        <input type="text" class="form-control" id="mongoUri" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="mongoDbName" class="form-label">MongoDB Database Name</label>
+                        <input type="text" class="form-control" id="mongoDbName" required />
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
+                `;
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+            } else if(dataSource === 'oracle') {
+                credentialFieldsDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label for="dbHost" class="form-label">DB Host</label>
+                        <input type="text" class="form-control" id="dbHost" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbPort" class="form-label">DB Port</label>
+                        <input type="number" class="form-control" id="dbPort" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbUsername" class="form-label">DB Username</label>
+                        <input type="text" class="form-control" id="dbUsername" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbPassword" class="form-label">DB Password</label>
+                        <input type="password" class="form-control" id="dbPassword" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbName" class="form-label">DB Name</label>
+                        <input type="text" class="form-control" id="dbName" required />
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
+                `;
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+            } else if(dataSource === 'airtable') {
+                credentialFieldsDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label for="airtableApiKey" class="form-label">Airtable API Key</label>
+                        <input type="password" class="form-control" id="airtableApiKey" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="airtableBaseId" class="form-label">Airtable Base ID</label>
+                        <input type="text" class="form-control" id="airtableBaseId" required />
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
+                `;
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+            } else if(dataSource === 'databricks') {
+                credentialFieldsDiv.innerHTML = `
+                    <div class="mb-3">  
+                        <label for="databricksHostname" class="form-label">Databricks Hostname</label>
+                        <input type="text" class="form-control" id="databricksHostname" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="databricksHttpPath" class="form-label">Databricks HTTP Path</label>
+                        <input type="text" class="form-control" id="databricksHttpPath" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="databricksToken" class="form-label">Databricks Token</label>
+                        <input type="password" class="form-control" id="databricksToken" required />
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
+                `;
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+            } else if(dataSource === 'supabase') {
+                credentialFieldsDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label for="supabaseUrl" class="form-label">Supabase URL</label>
+                        <input type="text" class="form-control" id="supabaseUrl" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="supabaseAnonKey" class="form-label">Supabase Anon Key</label>
+                        <input type="password" class="form-control" id="supabaseAnonKey" required />
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
+                `;
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+            } else if(dataSource === 'snowflake') {
+                credentialFieldsDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label for="snowflakeAccount" class="form-label">Snowflake Account</label>
+                        <input type="text" class="form-control" id="snowflakeAccount" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="snowflakeUser" class="form-label">Snowflake User</label>
+                        <input type="text" class="form-control" id="snowflakeUser" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="snowflakePassword" class="form-label">Snowflake Password</label>
+                        <input type="password" class="form-control" id="snowflakePassword" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="snowflakeWarehouse" class="form-label">Snowflake Warehouse</label>
+                        <input type="text" class="form-control" id="snowflakeWarehouse" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="snowflakeDatabase" class="form-label">Snowflake Database</label>
+                        <input type="text" class="form-control" id="snowflakeDatabase" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="snowflakeSchema" class="form-label">Snowflake Schema</label>
+                        <input type="text" class="form-control" id="snowflakeSchema" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="snowflakeRole" class="form-label">Snowflake Role</label>
+                        <input type="text" class="form-control" id="snowflakeRole" required />
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
+                `;
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+            } else if(dataSource === 'odoo') {
+                credentialFieldsDiv.innerHTML = `
+                    <div class="mb-3">
+                        <label for="odooUrl" class="form-label">Odoo URL</label>
+                        <input type="text" class="form-control" id="odooUrl" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="odooDb" class="form-label">Odoo Database</label>
+                        <input type="text" class="form-control" id="odooDb" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="odooUsername" class="form-label">Odoo Username</label>
+                        <input type="text" class="form-control" id="odooUsername" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="odooPassword" class="form-label">Odoo Password</label>
+                        <input type="password" class="form-control" id="odooPassword" required />
+                    </div>
+                    <div class="mb-3">
+                        <label for="selectedModule" class="form-label">Odoo Module (optional)</label>
+                        <input type="text" class="form-control" id="selectedModule" />
+                    </div>
+                    <button type="button" class="btn btn-secondary mb-3" id="loadTablesBtn">Load Tables</button>
+                `;
+                document.getElementById('loadTablesBtn').addEventListener('click', () => fetchTablesForDataSource(dataSource));
+
             } else {
                 // For other data sources, you can add credential fields similarly
                 credentialFieldsDiv.innerHTML = `<p>No credential fields defined for ${dataSource} yet.</p>`;
             }
         }
 
-        async function loadSheets() {
-            const sheetId = document.getElementById('sheetId').value.trim();
-            const serviceAccountJson = document.getElementById('serviceAccountJson').value.trim();
-            if(!sheetId || !serviceAccountJson) {
-                alert('Please enter both Sheet ID and Service Account JSON.');
-                return;
-            }
-            tableSelectionDiv.innerHTML = 'Loading sheets...';
-            tableSelectionContainer.style.display = 'block';
 
-            try {
-                const response = await fetch(`${API_BASE}/load_sheets`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({sheet_id: sheetId, service_account_json: serviceAccountJson})
-                });
-                if(!response.ok) {
-                    tableSelectionDiv.innerHTML = 'Failed to load sheets.';
-                    return;
-                }
-                const data = await response.json();
-                if(data.sheets && data.sheets.length > 0) {
-                    tableSelectionDiv.innerHTML = '';
-                    data.sheets.forEach(sheet => {
-                        const div = document.createElement('div');
-                        div.innerHTML = `<input type="checkbox" value="${sheet}" /> ${sheet}`;
-                        tableSelectionDiv.appendChild(div);
-                    });
-                } else {
-                    tableSelectionDiv.innerHTML = 'No sheets found.';
-                }
-            } catch(e) {
-                tableSelectionDiv.innerHTML = 'Error loading sheets.';
-            }
-        }
 
         async function fetchTablesForDataSource(dataSource) {
             tableSelectionDiv.innerHTML = '';
             tableSelectionContainer.style.display = 'none';
 
-            // For demo, only show table selection for some data sources
-            if(['mysql', 'postgresql', 'mssql', 'neo4j', 'mongodb', 'oracle', 'airtable', 'databricks', 'supabase', 'snowflake', 'odoo'].includes(dataSource)) {
-                // Show loading
-                tableSelectionDiv.innerHTML = 'Loading...';
-                tableSelectionContainer.style.display = 'block';
+            // Show loading
+            tableSelectionDiv.innerHTML = 'Loading...';
+            tableSelectionContainer.style.display = 'block';
 
-                // Prepare form data for set_credentials endpoint
-                const formData = new URLSearchParams();
-                formData.append('data_source', dataSource);
-                formData.append('gemini_api_key', ''); // Empty for now
-                formData.append('gemini_model', ''); // Empty for now
+            // Prepare form data for set_credentials endpoint
+            const formData = new URLSearchParams();
+            formData.append('data_source', dataSource);
+            formData.append('gemini_api_key', ''); // Empty for now
+            formData.append('gemini_model', ''); // Empty for now
 
-                // Add required fields based on dataSource for minimal request
-                // For demo, we skip actual credentials and just simulate empty or dummy values
-                // In real app, you would collect these from user or config
+            // Collect actual credentials from form fields
+            if(dataSource === 'google_sheets') {
+                formData.append('sheet_id', document.getElementById('sheetId').value);
+                formData.append('service_account_json', document.getElementById('serviceAccountJson').value);
+            } else if(dataSource === 'mysql' || dataSource === 'postgresql' || dataSource === 'mssql' || dataSource === 'oracle') {
+                formData.append('db_host', document.getElementById('dbHost').value);
+                formData.append('db_port', document.getElementById('dbPort').value);
+                formData.append('db_username', document.getElementById('dbUsername').value);
+                formData.append('db_password', document.getElementById('dbPassword').value);
+                formData.append('db_name', document.getElementById('dbName').value);
+            } else if(dataSource === 'neo4j') {
+                formData.append('neo4j_uri', document.getElementById('neo4jUri').value);
+                formData.append('neo4j_username', document.getElementById('neo4jUsername').value);
+                formData.append('neo4j_password', document.getElementById('neo4jPassword').value);
+                formData.append('neo4j_db_name', document.getElementById('neo4jDbName').value);
+            } else if(dataSource === 'mongodb') {
+                formData.append('mongo_uri', document.getElementById('mongoUri').value);
+                formData.append('mongo_db_name', document.getElementById('mongoDbName').value);
+            } else if(dataSource === 'airtable') {
+                formData.append('airtable_api_key', document.getElementById('airtableApiKey').value);
+                formData.append('airtable_base_id', document.getElementById('airtableBaseId').value);
+            } else if(dataSource === 'databricks') {
+                formData.append('databricks_hostname', document.getElementById('databricksHostname').value);
+                formData.append('databricks_http_path', document.getElementById('databricksHttpPath').value);
+                formData.append('databricks_token', document.getElementById('databricksToken').value);
+            } else if(dataSource === 'supabase') {
+                formData.append('supabase_url', document.getElementById('supabaseUrl').value);
+                formData.append('supabase_anon_key', document.getElementById('supabaseAnonKey').value);
+            } else if(dataSource === 'snowflake') {
+                formData.append('snowflake_account', document.getElementById('snowflakeAccount').value);
+                formData.append('snowflake_user', document.getElementById('snowflakeUser').value);
+                formData.append('snowflake_password', document.getElementById('snowflakePassword').value);
+                formData.append('snowflake_warehouse', document.getElementById('snowflakeWarehouse').value);
+                formData.append('snowflake_database', document.getElementById('snowflakeDatabase').value);
+                formData.append('snowflake_schema', document.getElementById('snowflakeSchema').value);
+                formData.append('snowflake_role', document.getElementById('snowflakeRole').value);
+            } else if(dataSource === 'odoo') {
+                formData.append('odoo_url', document.getElementById('odooUrl').value);
+                formData.append('odoo_db', document.getElementById('odooDb').value);
+                formData.append('odoo_username', document.getElementById('odooUsername').value);
+                formData.append('odoo_password', document.getElementById('odooPassword').value);
+                formData.append('selected_module', document.getElementById('selectedModule').value);
+            }
 
-                // Example for mysql
-                if(dataSource === 'mysql' || dataSource === 'postgresql' || dataSource === 'mssql') {
-                    formData.append('db_host', 'localhost');
-                    formData.append('db_port', '3306');
-                    formData.append('db_username', 'root');
-                    formData.append('db_password', '');
-                    formData.append('db_name', 'test');
-                } else if(dataSource === 'neo4j') {
-                    formData.append('neo4j_uri', 'bolt://localhost:7687');
-                    formData.append('neo4j_username', 'neo4j');
-                    formData.append('neo4j_password', 'password');
-                    formData.append('neo4j_db_name', 'neo4j');
-                } else if(dataSource === 'mongodb') {
-                    formData.append('mongo_uri', 'mongodb://localhost:27017');
-                    formData.append('mongo_db_name', 'test');
-                } else if(dataSource === 'oracle') {
-                    formData.append('db_host', 'localhost');
-                    formData.append('db_port', '1521');
-                    formData.append('db_username', 'system');
-                    formData.append('db_password', 'oracle');
-                    formData.append('db_name', 'ORCLCDB');
-                } else if(dataSource === 'airtable') {
-                    formData.append('airtable_api_key', '');
-                    formData.append('airtable_base_id', '');
-                } else if(dataSource === 'databricks') {
-                    formData.append('databricks_hostname', '');
-                    formData.append('databricks_http_path', '');
-                    formData.append('databricks_token', '');
-                } else if(dataSource === 'supabase') {
-                    formData.append('supabase_url', '');
-                    formData.append('supabase_anon_key', '');
-                } else if(dataSource === 'snowflake') {
-                    formData.append('snowflake_account', '');
-                    formData.append('snowflake_user', '');
-                    formData.append('snowflake_password', '');
-                    formData.append('snowflake_warehouse', '');
-                    formData.append('snowflake_database', '');
-                    formData.append('snowflake_schema', '');
-                    formData.append('snowflake_role', '');
-                } else if(dataSource === 'odoo') {
-                    formData.append('odoo_url', '');
-                    formData.append('odoo_db', '');
-                    formData.append('odoo_username', '');
-                    formData.append('odoo_password', '');
-                    formData.append('selected_module', '');
+            try {
+                const response = await fetch('/set_credentials', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: formData.toString()
+                });
+                if(!response.ok) {
+                    tableSelectionDiv.innerHTML = 'Failed to load tables.';
+                    return;
                 }
-
-                try {
-                    const response = await fetch('/set_credentials', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                        body: formData.toString()
+                const data = await response.json();
+                if(data.items && data.items.length > 0) {
+                    tableSelectionDiv.innerHTML = '';
+                    data.items.forEach(item => {
+                        const div = document.createElement('div');
+                        div.innerHTML = `<input type="checkbox" value="${item}" /> ${item}`;
+                        tableSelectionDiv.appendChild(div);
                     });
-                    if(!response.ok) {
-                        tableSelectionDiv.innerHTML = 'Failed to load tables.';
-                        return;
-                    }
-                    const data = await response.json();
-                    if(data.items && data.items.length > 0) {
-                        tableSelectionDiv.innerHTML = '';
-                        data.items.forEach(item => {
-                            const div = document.createElement('div');
-                            div.innerHTML = `<input type="checkbox" value="${item}" /> ${item}`;
-                            tableSelectionDiv.appendChild(div);
-                        });
-                    } else {
-                        tableSelectionDiv.innerHTML = 'No tables found.';
-                    }
-                } catch(e) {
-                    tableSelectionDiv.innerHTML = 'Error loading tables.';
+                } else {
+                    tableSelectionDiv.innerHTML = 'No tables found.';
                 }
+            } catch(e) {
+                tableSelectionDiv.innerHTML = 'Error loading tables.';
             }
         }
 

@@ -752,11 +752,11 @@ def set_credentials():
                 'database': CONFIG['db_name']
             }
             db_service = DatabaseService()
-            query = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
+            query = "SELECT TABLE_SCHEMA + '.' + TABLE_NAME AS table_name FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_TYPE = 'BASE TABLE'"
             results = db_service.fetch_from_mssql(creds, query)
             if isinstance(results, dict) and results.get('status') == 'error':
                 return jsonify({'error': results['message']}), 400
-            items = [row['TABLE_NAME'] for row in results]
+            items = [row['table_name'] for row in results]
             return jsonify({'type': 'tables', 'items': items})
         except Exception as e:
             return jsonify({'error': f'MS SQL connection failed: {str(e)}'}), 400
@@ -1122,7 +1122,11 @@ def chat():
         }
         db_service = DatabaseService()
         for table in selected_tables:
-            query = f"SELECT * FROM {table}"
+            if '.' in table:
+                schema, table_name = table.split('.', 1)
+                query = f"SELECT TOP 1000 * FROM [{schema}].[{table_name}]"
+            else:
+                query = f"SELECT TOP 1000 * FROM [{table}]"
             results = db_service.fetch_from_mssql(creds, query)
             if isinstance(results, dict) and results.get('status') == 'error':
                 return jsonify({'response': f'Error fetching from {table}: {results["message"]}'})
