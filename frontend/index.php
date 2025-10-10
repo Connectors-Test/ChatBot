@@ -842,7 +842,7 @@ function fillForm(cb){
         document.getElementById('border_thickness').value = '2px';
     }
 
-    const selectedItems = JSON.parse(cb.selected_items || "[]");
+    const selectedItems = JSON.parse(cb.selected_sheets || cb.selected_tables || "[]");
     const itemName = cb.data_source === 'google_sheets' ? 'sheet_names' : 'table_names';
     const container = document.getElementById('sheetSelection');
     container.querySelectorAll(`input[name="${itemName}"]`).forEach(input=>{

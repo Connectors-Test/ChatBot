@@ -5,3 +5,7 @@ backend/tests/test_data_sources.py
 credentials.txt
 TODO.md
 backend/check_endpoints.py
+check_embedded_chatbot.html
+backend/tests/__pycache__/test_data_sources.cpython-313.pyc
+__pycache__/
+*.pyc

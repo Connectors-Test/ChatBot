@@ -910,6 +910,7 @@ def set_items():
 @main_bp.route('/chat', methods=['POST'])
 def chat():
     global worksheets, selected_tables, CONFIG, gemini_client, db_conn
+    logging.info("Chat endpoint called")
 
     def get_access_token(service_json):
         """Obtain OAuth2 access token from service account JSON."""
@@ -964,6 +965,7 @@ def chat():
     data = request.json
     share_key = data.get('share_key')
     if share_key:
+        logging.info(f"Loading config for share_key: {share_key}")
         # Load config from shared chatbot
         conn = sqlite3.connect(DB_FILE)
         conn.row_factory = sqlite3.Row
@@ -972,7 +974,138 @@ def chat():
         row = cursor.fetchone()
         conn.close()
         if not row:
+            logging.error(f"Chatbot not found for share_key: {share_key}")
             return jsonify({'response': 'Chatbot not found'}), 404
+        logging.info("Chatbot config loaded successfully")
+        cb = dict(row)
+        logging.info(f"Chatbot data_source: {cb['data_source']}, selected_sheets: {cb.get('selected_sheets')}, selected_tables: {cb.get('selected_tables')}")
+        # Set CONFIG from cb
+        CONFIG = {
+            'gemini_api_key': cb['gemini_api_key'],
+            'gemini_model': cb['gemini_model'],
+            'data_source': cb['data_source'],
+            'sheet_id': cb.get('sheet_id'),
+            'service_account_json': cb.get('service_account_json'),
+            'db_host': cb.get('db_host'),
+            'db_port': cb.get('db_port'),
+            'db_name': cb.get('db_name'),
+            'db_username': cb.get('db_username'),
+            'db_password': cb.get('db_password'),
+            'mongo_uri': cb.get('mongo_uri'),
+            'mongo_db_name': cb.get('mongo_db_name'),
+            'airtable_api_key': cb.get('airtable_api_key'),
+            'airtable_base_id': cb.get('airtable_base_id'),
+            'databricks_hostname': cb.get('databricks_hostname'),
+            'databricks_http_path': cb.get('databricks_http_path'),
+            'databricks_token': cb.get('databricks_token'),
+            'supabase_url': cb.get('supabase_url'),
+            'supabase_anon_key': cb.get('supabase_anon_key'),
+            'snowflake_account': cb.get('snowflake_account'),
+            'snowflake_user': cb.get('snowflake_user'),
+            'snowflake_password': cb.get('snowflake_password'),
+            'snowflake_warehouse': cb.get('snowflake_warehouse'),
+            'snowflake_database': cb.get('snowflake_database'),
+            'snowflake_schema': cb.get('snowflake_schema'),
+            'snowflake_role': cb.get('snowflake_role'),
+            'odoo_url': cb.get('odoo_url'),
+            'odoo_db': cb.get('odoo_db'),
+            'odoo_username': cb.get('odoo_username'),
+            'odoo_password': cb.get('odoo_password'),
+            'selected_module': cb.get('selected_module')
+        }
+        selected_tables = json.loads(cb.get('selected_tables') or '[]')
+        selected_sheets = json.loads(cb.get('selected_sheets') or '[]')
+        CONFIG['selected_sheets'] = selected_sheets
+        worksheets = []  # Reset
+        try:
+            gemini_client = genai.Client(api_key=CONFIG['gemini_api_key'])
+            logging.info("Gemini client initialized successfully")
+        except Exception as e:
+            logging.error(f"Failed to initialize Gemini client: {str(e)}")
+            return jsonify({'response': f'Failed to initialize Gemini: {str(e)}'})
+        # Set up connections for shared chatbot
+        db_conn = None
+        if CONFIG['data_source'] == 'google_sheets':
+            try:
+                service_json = json.loads(CONFIG['service_account_json'])
+                creds = Credentials.from_service_account_info(service_json, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
+                gc = gspread.authorize(creds)
+                spreadsheet = gc.open_by_key(CONFIG['sheet_id'])
+                worksheets = [spreadsheet.worksheet(name) for name in selected_sheets]
+                logging.info(f"Google Sheets setup successful, worksheets: {len(worksheets)}")
+            except Exception as e:
+                logging.error(f"Failed to set up Google Sheets for shared chatbot: {str(e)}")
+                return jsonify({'response': f'Failed to set up Google Sheets: {str(e)}'})
+        elif CONFIG['data_source'] == 'mysql':
+            try:
+                db_conn = pymysql.connect(
+                    host=CONFIG['db_host'],
+                    port=int(CONFIG['db_port']),
+                    user=CONFIG['db_username'],
+                    password=CONFIG['db_password'],
+                    database=CONFIG['db_name']
+                )
+                logging.info("MySQL connection successful")
+            except Exception as e:
+                logging.error(f"Failed to connect to MySQL for shared chatbot: {str(e)}")
+                return jsonify({'response': f'Failed to connect to MySQL: {str(e)}'})
+        elif CONFIG['data_source'] == 'postgresql':
+            try:
+                db_conn = psycopg2.connect(
+                    host=CONFIG['db_host'],
+                    port=int(CONFIG['db_port']),
+                    user=CONFIG['db_username'],
+                    password=CONFIG['db_password'],
+                    database=CONFIG['db_name']
+                )
+                logging.info("PostgreSQL connection successful")
+            except Exception as e:
+                logging.error(f"Failed to connect to PostgreSQL for shared chatbot: {str(e)}")
+                return jsonify({'response': f'Failed to connect to PostgreSQL: {str(e)}'})
+        elif CONFIG['data_source'] == 'neo4j':
+            try:
+                uri = CONFIG['db_host']
+                if uri.startswith("neo4j+s://"):
+                    uri = uri.replace("neo4j+s://", "neo4j+ssc://")
+                elif uri.startswith("bolt+s://"):
+                    uri = uri.replace("bolt+s://", "bolt+ssc://")
+                elif uri.startswith("neo4j://") and "localhost" in uri:
+                    uri = uri.replace("neo4j://", "bolt://")
+                username = CONFIG['db_username']
+                password = CONFIG['db_password']
+                database = CONFIG['db_name']
+                if database != 'neo4j':
+                    logging.warning(f"Overriding Neo4j database name from {database} to 'neo4j' for Aura compatibility")
+                    database = 'neo4j'
+                CONFIG['db_name'] = database
+                driver = GraphDatabase.driver(uri, auth=(username, password))
+                db_conn = driver
+                logging.info("Neo4j connection successful")
+            except Exception as e:
+                logging.error(f"Failed to connect to Neo4j for shared chatbot: {str(e)}")
+                return jsonify({'response': f'Failed to connect to Neo4j: {str(e)}'})
+        elif CONFIG['data_source'] == 'mongodb':
+            try:
+                client = MongoClient(CONFIG['mongo_uri'], tls=True, tlsAllowInvalidCertificates=True)
+                db_conn = client[CONFIG['mongo_db_name']]
+                logging.info("MongoDB connection successful")
+            except Exception as e:
+                logging.error(f"Failed to connect to MongoDB for shared chatbot: {str(e)}")
+                return jsonify({'response': f'Failed to connect to MongoDB: {str(e)}'})
+        # For other data sources (oracle, mssql, airtable, databricks, supabase, snowflake, odoo), connections are handled in the chat function using DatabaseService
+        logging.info(f"Setup complete for data_source: {CONFIG['data_source']}")
+
+    config_id = data.get('config_id')
+    if config_id:
+        # Load config from chat_configs
+        conn = sqlite3.connect(DB_FILE)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM chat_configs WHERE id=?", (config_id,))
+        row = cursor.fetchone()
+        conn.close()
+        if not row:
+            return jsonify({'response': 'Config not found'}), 404
         cb = dict(row)
         # Set CONFIG from cb
         CONFIG = {
@@ -1009,9 +1142,11 @@ def chat():
             'selected_module': cb.get('selected_module')
         }
         selected_tables = json.loads(cb.get('selected_tables') or '[]')
+        selected_sheets = json.loads(cb.get('selected_sheets') or '[]')
+        CONFIG['selected_sheets'] = selected_sheets
         worksheets = []  # Reset
         gemini_client = genai.Client(api_key=CONFIG['gemini_api_key'])
-        # Set up connections for shared chatbot
+        # Set up connections for config_id
         db_conn = None
         if CONFIG['data_source'] == 'google_sheets':
             try:
@@ -1019,9 +1154,9 @@ def chat():
                 creds = Credentials.from_service_account_info(service_json, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
                 gc = gspread.authorize(creds)
                 spreadsheet = gc.open_by_key(CONFIG['sheet_id'])
-                worksheets = [spreadsheet.worksheet(name) for name in CONFIG['selected_sheets']]
+                worksheets = [spreadsheet.worksheet(name) for name in selected_sheets]
             except Exception as e:
-                logging.error(f"Failed to set up Google Sheets for shared chatbot: {str(e)}")
+                logging.error(f"Failed to set up Google Sheets for config_id: {str(e)}")
                 return jsonify({'response': f'Failed to set up Google Sheets: {str(e)}'})
         elif CONFIG['data_source'] == 'mysql':
             try:
@@ -1033,7 +1168,7 @@ def chat():
                     database=CONFIG['db_name']
                 )
             except Exception as e:
-                logging.error(f"Failed to connect to MySQL for shared chatbot: {str(e)}")
+                logging.error(f"Failed to connect to MySQL for config_id: {str(e)}")
                 return jsonify({'response': f'Failed to connect to MySQL: {str(e)}'})
         elif CONFIG['data_source'] == 'postgresql':
             try:
@@ -1045,7 +1180,7 @@ def chat():
                     database=CONFIG['db_name']
                 )
             except Exception as e:
-                logging.error(f"Failed to connect to PostgreSQL for shared chatbot: {str(e)}")
+                logging.error(f"Failed to connect to PostgreSQL for config_id: {str(e)}")
                 return jsonify({'response': f'Failed to connect to PostgreSQL: {str(e)}'})
         elif CONFIG['data_source'] == 'neo4j':
             try:
@@ -1066,14 +1201,14 @@ def chat():
                 driver = GraphDatabase.driver(uri, auth=(username, password))
                 db_conn = driver
             except Exception as e:
-                logging.error(f"Failed to connect to Neo4j for shared chatbot: {str(e)}")
+                logging.error(f"Failed to connect to Neo4j for config_id: {str(e)}")
                 return jsonify({'response': f'Failed to connect to Neo4j: {str(e)}'})
         elif CONFIG['data_source'] == 'mongodb':
             try:
                 client = MongoClient(CONFIG['mongo_uri'], tls=True, tlsAllowInvalidCertificates=True)
                 db_conn = client[CONFIG['mongo_db_name']]
             except Exception as e:
-                logging.error(f"Failed to connect to MongoDB for shared chatbot: {str(e)}")
+                logging.error(f"Failed to connect to MongoDB for config_id: {str(e)}")
                 return jsonify({'response': f'Failed to connect to MongoDB: {str(e)}'})
         # For other data sources (oracle, mssql, airtable, databricks, supabase, snowflake, odoo), connections are handled in the chat function using DatabaseService
 
@@ -1302,18 +1437,29 @@ def chat():
         data_desc = "Database data"
 
     prompt = system_instruction + f"\nSpreadsheet data: {json.dumps(all_data, indent=2, default=str)}\nUser: {user_input}"
+    logging.info(f"Prompt length: {len(prompt)}, data keys: {list(all_data.keys())}")
 
     if gemini_client is None:
+        logging.error("Gemini client is None")
         return jsonify({'response': 'Gemini client not initialized. Please set credentials first.'})
 
-    response = gemini_client.models.generate_content(
-        model=CONFIG['gemini_model'],
-        contents=prompt
-    )
+    try:
+        logging.info("Calling Gemini API")
+        response = gemini_client.models.generate_content(
+            model=CONFIG['gemini_model'],
+            contents=prompt
+        )
+        logging.info("Gemini API call completed")
+    except Exception as e:
+        logging.error(f"Gemini API error: {str(e)}")
+        return jsonify({'response': f'Gemini API error: {str(e)}'})
 
     bot_reply = "Sorry, no response."
     if response.candidates and response.candidates[0].content.parts:
         bot_reply = response.candidates[0].content.parts[0].text
+        logging.info(f"Bot reply length: {len(bot_reply)}")
+    else:
+        logging.warning("No candidates or parts in Gemini response")
 
     return jsonify({'response': bot_reply})
 
@@ -1321,23 +1467,22 @@ def chat():
 @main_bp.route('/save_chatbot', methods=['POST'])
 def save_chatbot():
     try:
+        data = request.form
+        logging.info(f"Received save_chatbot data: {dict(data)}")
         # Validation: Check required fields
-        required_fields = ['username', 'chatbot_id', 'chatbot_name', 'gemini_api_key', 'gemini_model']
+        required_fields = ['chatbot_id', 'chatbot_name', 'gemini_api_key', 'gemini_model']
         for field in required_fields:
-            if not request.form.get(field):
+            if not data.get(field):
+                logging.error(f"Missing required field: {field}")
                 return jsonify({"success": False, "message": f"{field} is required"}), 400
 
-        username = request.form['username']
-        data_source = request.form.get('data_source')
-        selected_items = request.form.getlist('selected_items')
+        username = data['username']
+        data_source = data.get('data_source')
+        selected_items = data.getlist('selected_items')
 
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE username=?", (username,))
-        row = cursor.fetchone()
-        if not row:
-            conn.close()
-            return jsonify({"success": False, "message": "User not found"}), 400
+        # Removed user existence check as username is not required for saving chatbot
 
         # Initialize all conditional variables to None
         selected_sheets = None
@@ -1369,82 +1514,82 @@ def save_chatbot():
             selected_sheets = json.dumps(selected_items)
         elif data_source == 'neo4j':
             selected_tables = json.dumps(selected_items)
-            db_host = request.form.get('neo4j_uri')
+            db_host = data.get('neo4j_uri')
             db_port = None
-            db_name = request.form.get('neo4j_db_name')
+            db_name = data.get('neo4j_db_name')
             logging.info(f"Saving Neo4j chatbot: db_name={db_name}")
-            db_username = request.form.get('neo4j_username')
-            db_password = request.form.get('neo4j_password')
+            db_username = data.get('neo4j_username')
+            db_password = data.get('neo4j_password')
         elif data_source == 'mongodb':
             selected_collections = json.dumps(selected_items)
-            mongo_uri = request.form.get('mongo_uri')
-            mongo_db_name = request.form.get('mongo_db_name')
+            mongo_uri = data.get('mongo_uri')
+            mongo_db_name = data.get('mongo_db_name')
         elif data_source == 'oracle':
             selected_tables = json.dumps(selected_items)
-            db_host = request.form.get('db_host')
-            db_port_str = request.form.get('db_port')
+            db_host = data.get('db_host')
+            db_port_str = data.get('db_port')
             db_port = int(db_port_str) if db_port_str else None
-            db_name = request.form.get('db_name')
-            db_username = request.form.get('db_username')
-            db_password = request.form.get('db_password')
+            db_name = data.get('db_name')
+            db_username = data.get('db_username')
+            db_password = data.get('db_password')
         elif data_source == 'mssql':
             selected_tables = json.dumps(selected_items)
-            db_host = request.form.get('db_host')
-            db_port_str = request.form.get('db_port')
+            db_host = data.get('db_host')
+            db_port_str = data.get('db_port')
             db_port = int(db_port_str) if db_port_str else None
-            db_name = request.form.get('db_name')
-            db_username = request.form.get('db_username')
-            db_password = request.form.get('db_password')
+            db_name = data.get('db_name')
+            db_username = data.get('db_username')
+            db_password = data.get('db_password')
         elif data_source == 'airtable':
             selected_tables = json.dumps(selected_items)
-            airtable_api_key = request.form.get('airtable_api_key')
-            airtable_base_id = request.form.get('airtable_base_id')
+            airtable_api_key = data.get('airtable_api_key')
+            airtable_base_id = data.get('airtable_base_id')
         elif data_source == 'databricks':
             selected_tables = json.dumps(selected_items)
-            databricks_hostname = request.form.get('databricks_hostname')
-            databricks_http_path = request.form.get('databricks_http_path')
-            databricks_token = request.form.get('databricks_token')
+            databricks_hostname = data.get('databricks_hostname')
+            databricks_http_path = data.get('databricks_http_path')
+            databricks_token = data.get('databricks_token')
         elif data_source == 'supabase':
             selected_tables = json.dumps(selected_items)
-            supabase_url = request.form.get('supabase_url')
-            supabase_anon_key = request.form.get('supabase_anon_key')
+            supabase_url = data.get('supabase_url')
+            supabase_anon_key = data.get('supabase_anon_key')
         elif data_source == 'snowflake':
             selected_tables = json.dumps(selected_items)
-            snowflake_account = request.form.get('snowflake_account')
-            snowflake_user = request.form.get('snowflake_user')
-            snowflake_password = request.form.get('snowflake_password')
-            snowflake_warehouse = request.form.get('snowflake_warehouse')
-            snowflake_database = request.form.get('snowflake_database')
-            snowflake_schema = request.form.get('snowflake_schema')
-            snowflake_role = request.form.get('snowflake_role')
+            snowflake_account = data.get('snowflake_account')
+            snowflake_user = data.get('snowflake_user')
+            snowflake_password = data.get('snowflake_password')
+            snowflake_warehouse = data.get('snowflake_warehouse')
+            snowflake_database = data.get('snowflake_database')
+            snowflake_schema = data.get('snowflake_schema')
+            snowflake_role = data.get('snowflake_role')
         elif data_source == 'odoo':
             selected_tables = json.dumps(selected_items)
             # Odoo fields are handled in chatbot_data
         else:
             selected_tables = json.dumps(selected_items)
-            db_host = request.form.get('db_host')
-            db_port_str = request.form.get('db_port')
+            db_host = data.get('db_host')
+            db_port_str = data.get('db_port')
             db_port = int(db_port_str) if db_port_str else None
-            db_name = request.form.get('db_name')
-            db_username = request.form.get('db_username')
-            db_password = request.form.get('db_password')
+            db_name = data.get('db_name')
+            db_username = data.get('db_username')
+            db_password = data.get('db_password')
 
         # Generate share_key if not exists
-        share_key = request.form.get('share_key')
+        share_key = data.get('share_key')
         if not share_key:
             share_key = secrets.token_urlsafe(16)
             logging.info(f"Generated new share_key: {share_key}")
 
         chatbot_data = {
-            'id': request.form['chatbot_id'],
+            'id': data['chatbot_id'],
             'username': username,
-            'chatbot_name': request.form['chatbot_name'],
-            'gemini_api_key': request.form['gemini_api_key'],
-            'gemini_model': request.form['gemini_model'],
+            'chatbot_name': data['chatbot_name'],
+            'gemini_api_key': data['gemini_api_key'],
+            'gemini_model': data['gemini_model'],
             'data_source': data_source,
-            'sheet_id': request.form.get('sheet_id'),
+            'sheet_id': data.get('sheet_id'),
             'selected_sheets': selected_sheets,
-            'service_account_json': request.form.get('service_account_json'),
+            'service_account_json': data.get('service_account_json'),
             'db_host': db_host,
             'db_port': db_port,
             'db_name': db_name,
@@ -1468,33 +1613,97 @@ def save_chatbot():
             'snowflake_database': snowflake_database,
             'snowflake_schema': snowflake_schema,
             'snowflake_role': snowflake_role,
-            'odoo_url': request.form.get('odoo_url'),
-            'odoo_db': request.form.get('odoo_db'),
-            'odoo_username': request.form.get('odoo_username'),
-            'odoo_password': request.form.get('odoo_password'),
-            'selected_module': request.form.get('selected_module'),
+            'odoo_url': data.get('odoo_url'),
+            'odoo_db': data.get('odoo_db'),
+            'odoo_username': data.get('odoo_username'),
+            'odoo_password': data.get('odoo_password'),
+            'selected_module': data.get('selected_module'),
             'share_key': share_key,
-            'company_logo': request.form.get('company_logo'),
-            'nav_color': request.form.get('nav_color'),
-            'text_color': request.form.get('text_color'),
-            'content_bg_color': request.form.get('content_bg_color'),
-            'textarea_color': request.form.get('textarea_color'),
-            'textarea_border_color': request.form.get('textarea_border_color'),
-            'textarea_border_thickness': request.form.get('textarea_border_thickness'),
-            'button_color': request.form.get('button_color'),
-            'button_text_color': request.form.get('button_text_color'),
-            'border_color': request.form.get('border_color'),
-            'border_thickness': request.form.get('border_thickness'),
-            'nav_border_color': request.form.get('nav_border_color'),
-            'nav_border_thickness': request.form.get('nav_border_thickness')
+            'company_logo': data.get('company_logo'),
+            'nav_color': data.get('nav_color'),
+            'text_color': data.get('text_color'),
+            'content_bg_color': data.get('content_bg_color'),
+            'textarea_color': data.get('textarea_color'),
+            'textarea_border_color': data.get('textarea_border_color'),
+            'textarea_border_thickness': data.get('textarea_border_thickness'),
+            'button_color': data.get('button_color'),
+            'button_text_color': data.get('button_text_color'),
+            'border_color': data.get('border_color'),
+            'border_thickness': data.get('border_thickness'),
+            'nav_border_color': data.get('nav_border_color'),
+            'nav_border_thickness': data.get('nav_border_thickness')
         }
         db_service = DatabaseService()
         db_service.save_chatbot(chatbot_data)
         # Return share_key in response
-        return jsonify({"success": True, "share_key": share_key})
+        return jsonify({"share_key": share_key})
     except Exception as e:
         # Logging: Log exceptions
         logging.error(f"Error saving chatbot: {str(e)}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+# --- Save chat config ---
+@main_bp.route('/save_chat_config', methods=['POST'])
+def save_chat_config():
+    try:
+        data = request.form
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO chat_configs (
+                data_source, gemini_api_key, gemini_model, sheet_id, service_account_json,
+                db_host, db_port, db_name, db_username, db_password, selected_sheets, selected_tables,
+                neo4j_uri, neo4j_db_name, neo4j_username, neo4j_password, mongo_uri, mongo_db_name,
+                airtable_api_key, airtable_base_id, databricks_hostname, databricks_http_path, databricks_token,
+                supabase_url, supabase_anon_key, snowflake_account, snowflake_user, snowflake_password,
+                snowflake_warehouse, snowflake_database, snowflake_schema, snowflake_role,
+                odoo_url, odoo_db, odoo_username, odoo_password, selected_module
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            data.get('data_source'),
+            data.get('gemini_api_key'),
+            data.get('gemini_model'),
+            data.get('sheet_id'),
+            data.get('service_account_json'),
+            data.get('db_host'),
+            data.get('db_port'),
+            data.get('db_name'),
+            data.get('db_username'),
+            data.get('db_password'),
+            data.get('selected_sheets'),
+            data.get('selected_tables'),
+            data.get('neo4j_uri'),
+            data.get('neo4j_db_name'),
+            data.get('neo4j_username'),
+            data.get('neo4j_password'),
+            data.get('mongo_uri'),
+            data.get('mongo_db_name'),
+            data.get('airtable_api_key'),
+            data.get('airtable_base_id'),
+            data.get('databricks_hostname'),
+            data.get('databricks_http_path'),
+            data.get('databricks_token'),
+            data.get('supabase_url'),
+            data.get('supabase_anon_key'),
+            data.get('snowflake_account'),
+            data.get('snowflake_user'),
+            data.get('snowflake_password'),
+            data.get('snowflake_warehouse'),
+            data.get('snowflake_database'),
+            data.get('snowflake_schema'),
+            data.get('snowflake_role'),
+            data.get('odoo_url'),
+            data.get('odoo_db'),
+            data.get('odoo_username'),
+            data.get('odoo_password'),
+            data.get('selected_module')
+        ))
+        config_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+        return jsonify({"config_id": config_id})
+    except Exception as e:
+        logging.error(f"Error saving chat config: {str(e)}")
         return jsonify({"success": False, "message": str(e)}), 500
 
 # --- Check chatbot count for restrictions ---

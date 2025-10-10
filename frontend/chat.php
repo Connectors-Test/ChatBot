@@ -59,10 +59,20 @@
             padding: 10px;
             border-radius: 4px;
         }
+        #micBtn {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+        #micBtn.recording {
+            background-color: red;
+            border-color: red;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <div id="invisibleButton" title="Click 15 times to configure chatbot"></div>
+    <button id="viewChatbotsBtn" class="btn btn-secondary mt-2">View My Chatbots</button>
 
     <!-- Modal -->
     <div class="modal fade" id="configModal" tabindex="-1" aria-labelledby="configModalLabel" aria-hidden="true">
@@ -74,6 +84,10 @@
           </div>
           <div class="modal-body">
             <form id="configForm">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" required />
+                </div>
                 <div class="mb-3">
                     <label for="chatbotName" class="form-label">Chatbot Name</label>
                     <input type="text" class="form-control" id="chatbotName" required />
@@ -108,10 +122,10 @@
                 <div class="mb-3">
                     <label for="geminiModel" class="form-label">Gemini Model</label>
                     <select class="form-select" id="geminiModel" required>
-                        <option value="gemini-1.5-flash" selected>gemini-1.5-flash</option>
+                        <option value="gemini-1.5-flash">gemini-1.5-flash</option>
                         <option value="gemini-1.5-pro">gemini-1.5-pro</option>
                         <option value="gemini-pro">gemini-pro</option>
-                        <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                        <option value="gemini-2.0-flash" selected>gemini-2.0-flash</option>
                     </select>
                 </div>
 
@@ -129,11 +143,27 @@
       </div>
     </div>
 
+    <!-- Chatbots List Modal -->
+    <div class="modal fade" id="chatbotsModal" tabindex="-1" aria-labelledby="chatbotsModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="chatbotsModalLabel">My Saved Chatbots</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="chatbotsGrid" class="row"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div id="chatContainer" class="d-flex flex-column">
         <h4 id="chatTitle"></h4>
         <div id="chatMessages"></div>
         <div class="input-group">
             <input type="text" id="userInput" class="form-control" placeholder="Ask your chatbot..." autocomplete="off" />
+            <button class="btn btn-secondary" id="micBtn">🎤</button>
             <button class="btn btn-primary" id="sendBtn">Send</button>
         </div>
     </div>
@@ -142,24 +172,51 @@
     <script>
         const invisibleButton = document.getElementById('invisibleButton');
         const configModal = new bootstrap.Modal(document.getElementById('configModal'));
+        const chatbotsModal = new bootstrap.Modal(document.getElementById('chatbotsModal'));
         const configForm = document.getElementById('configForm');
         const chatbotIdInput = document.getElementById('chatbotId');
         const generateIdBtn = document.getElementById('generateIdBtn');
+        const viewChatbotsBtn = document.getElementById('viewChatbotsBtn');
         const dataSourceSelect = document.getElementById('dataSource');
         const credentialFieldsDiv = document.getElementById('credentialFields');
         const tableSelectionContainer = document.getElementById('tableSelectionContainer');
         const tableSelectionDiv = document.getElementById('tableSelection');
+        const chatbotsGrid = document.getElementById('chatbotsGrid');
         const chatContainer = document.getElementById('chatContainer');
         const chatTitle = document.getElementById('chatTitle');
         const chatMessages = document.getElementById('chatMessages');
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
+        const micBtn = document.getElementById('micBtn');
 
         const API_BASE = 'http://localhost:5001';
 
         let clickCount = 0;
         let configured = false;
-        let config = null;
+        let shareKey = null;
+        let recognition;
+        let isRecording = false;
+
+        // Speech Recognition setup
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'en-US';
+            recognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                userInput.value += transcript;
+            };
+            recognition.onend = () => {
+                isRecording = false;
+                micBtn.classList.remove('recording');
+                micBtn.textContent = '🎤';
+            };
+        } else {
+            micBtn.disabled = true;
+            micBtn.textContent = 'No Mic';
+        }
 
         invisibleButton.addEventListener('click', () => {
             clickCount++;
@@ -171,6 +228,10 @@
 
         generateIdBtn.addEventListener('click', () => {
             chatbotIdInput.value = 'cb-' + Math.random().toString(36).substring(2, 10);
+        });
+
+        viewChatbotsBtn.addEventListener('click', () => {
+            loadChatbots();
         });
 
         dataSourceSelect.addEventListener('change', () => {
@@ -524,70 +585,175 @@
 
         configForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const username = document.getElementById('username').value.trim();
             const chatbotName = document.getElementById('chatbotName').value.trim();
             const chatbotId = chatbotIdInput.value.trim();
             const dataSource = dataSourceSelect.value;
             const selectedTables = Array.from(tableSelectionDiv.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
 
-            if(!chatbotName || !chatbotId) {
-                alert('Please fill chatbot name and generate ID.');
+            if(!username || !chatbotName || !chatbotId) {
+                alert('Please fill username, chatbot name, and generate ID.');
                 return;
             }
+
+            const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
+            const geminiModel = document.getElementById('geminiModel').value;
+            if(!geminiApiKey) {
+                alert('Please enter Gemini API Key.');
+                return;
+            }
+            if(selectedTables.length === 0) {
+                alert('Please select at least one item.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('username', username);
+            formData.append('chatbot_id', chatbotId);
+            formData.append('chatbot_name', chatbotName);
+            formData.append('data_source', dataSource);
+            formData.append('gemini_api_key', geminiApiKey);
+            formData.append('gemini_model', geminiModel);
+            formData.append('selected_tables', JSON.stringify(selectedTables));
+
+            // Debug: Log formData contents
+            console.log('FormData contents:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+
             if(dataSource === 'google_sheets') {
-                const geminiApiKey = document.getElementById('geminiApiKey').value.trim();
-                const geminiModel = document.getElementById('geminiModel').value;
                 const sheetId = document.getElementById('sheetId').value.trim();
                 const serviceAccountJson = document.getElementById('serviceAccountJson').value.trim();
-                if(!geminiApiKey) {
-                    alert('Please enter Gemini API Key.');
-                    return;
-                }
                 if(!sheetId || !serviceAccountJson) {
                     alert('Please enter Google Sheet ID and Service Account JSON.');
                     return;
                 }
-                if(selectedTables.length === 0) {
-                    alert('Please select at least one sheet.');
+                formData.append('sheet_id', sheetId);
+                formData.append('service_account_json', serviceAccountJson);
+                formData.append('selected_sheets', JSON.stringify(selectedTables));
+            } else if(dataSource === 'mysql' || dataSource === 'postgresql' || dataSource === 'mssql' || dataSource === 'oracle') {
+                const dbHost = document.getElementById('dbHost').value.trim();
+                const dbPort = document.getElementById('dbPort').value;
+                const dbUsername = document.getElementById('dbUsername').value.trim();
+                const dbPassword = document.getElementById('dbPassword').value.trim();
+                const dbName = document.getElementById('dbName').value.trim();
+                if(!dbHost || !dbPort || !dbUsername || !dbPassword || !dbName) {
+                    alert('Please fill all database fields.');
                     return;
                 }
-                // Save chatbot config to backend
-                const configData = {
-                    chatbot_name: chatbotName,
-                    chatbot_id: chatbotId,
-                    data_source: dataSource,
-                    gemini_api_key: geminiApiKey,
-                    gemini_model: geminiModel,
-                    sheet_id: sheetId,
-                    service_account_json: serviceAccountJson,
-                    selected_tables: selectedTables
-                };
+                formData.append('db_host', dbHost);
+                formData.append('db_port', dbPort);
+                formData.append('db_username', dbUsername);
+                formData.append('db_password', dbPassword);
+                formData.append('db_name', dbName);
+            } else if(dataSource === 'neo4j') {
+                const neo4jUri = document.getElementById('neo4jUri').value.trim();
+                const neo4jUsername = document.getElementById('neo4jUsername').value.trim();
+                const neo4jPassword = document.getElementById('neo4jPassword').value.trim();
+                const neo4jDbName = document.getElementById('neo4jDbName').value.trim();
+                if(!neo4jUri || !neo4jUsername || !neo4jPassword || !neo4jDbName) {
+                    alert('Please fill all Neo4j fields.');
+                    return;
+                }
+                formData.append('neo4j_uri', neo4jUri);
+                formData.append('neo4j_username', neo4jUsername);
+                formData.append('neo4j_password', neo4jPassword);
+                formData.append('neo4j_db_name', neo4jDbName);
+            } else if(dataSource === 'mongodb') {
+                const mongoUri = document.getElementById('mongoUri').value.trim();
+                const mongoDbName = document.getElementById('mongoDbName').value.trim();
+                if(!mongoUri || !mongoDbName) {
+                    alert('Please fill all MongoDB fields.');
+                    return;
+                }
+                formData.append('mongo_uri', mongoUri);
+                formData.append('mongo_db_name', mongoDbName);
+                formData.append('selected_collections', JSON.stringify(selectedTables));
+            } else if(dataSource === 'airtable') {
+                const airtableApiKey = document.getElementById('airtableApiKey').value.trim();
+                const airtableBaseId = document.getElementById('airtableBaseId').value.trim();
+                if(!airtableApiKey || !airtableBaseId) {
+                    alert('Please fill all Airtable fields.');
+                    return;
+                }
+                formData.append('airtable_api_key', airtableApiKey);
+                formData.append('airtable_base_id', airtableBaseId);
+            } else if(dataSource === 'databricks') {
+                const databricksHostname = document.getElementById('databricksHostname').value.trim();
+                const databricksHttpPath = document.getElementById('databricksHttpPath').value.trim();
+                const databricksToken = document.getElementById('databricksToken').value.trim();
+                if(!databricksHostname || !databricksHttpPath || !databricksToken) {
+                    alert('Please fill all Databricks fields.');
+                    return;
+                }
+                formData.append('databricks_hostname', databricksHostname);
+                formData.append('databricks_http_path', databricksHttpPath);
+                formData.append('databricks_token', databricksToken);
+            } else if(dataSource === 'supabase') {
+                const supabaseUrl = document.getElementById('supabaseUrl').value.trim();
+                const supabaseAnonKey = document.getElementById('supabaseAnonKey').value.trim();
+                if(!supabaseUrl || !supabaseAnonKey) {
+                    alert('Please fill all Supabase fields.');
+                    return;
+                }
+                formData.append('supabase_url', supabaseUrl);
+                formData.append('supabase_anon_key', supabaseAnonKey);
+            } else if(dataSource === 'snowflake') {
+                const snowflakeAccount = document.getElementById('snowflakeAccount').value.trim();
+                const snowflakeUser = document.getElementById('snowflakeUser').value.trim();
+                const snowflakePassword = document.getElementById('snowflakePassword').value.trim();
+                const snowflakeWarehouse = document.getElementById('snowflakeWarehouse').value.trim();
+                const snowflakeDatabase = document.getElementById('snowflakeDatabase').value.trim();
+                const snowflakeSchema = document.getElementById('snowflakeSchema').value.trim();
+                const snowflakeRole = document.getElementById('snowflakeRole').value.trim();
+                if(!snowflakeAccount || !snowflakeUser || !snowflakePassword || !snowflakeWarehouse || !snowflakeDatabase || !snowflakeSchema || !snowflakeRole) {
+                    alert('Please fill all Snowflake fields.');
+                    return;
+                }
+                formData.append('snowflake_account', snowflakeAccount);
+                formData.append('snowflake_user', snowflakeUser);
+                formData.append('snowflake_password', snowflakePassword);
+                formData.append('snowflake_warehouse', snowflakeWarehouse);
+                formData.append('snowflake_database', snowflakeDatabase);
+                formData.append('snowflake_schema', snowflakeSchema);
+                formData.append('snowflake_role', snowflakeRole);
+            } else if(dataSource === 'odoo') {
+                const odooUrl = document.getElementById('odooUrl').value.trim();
+                const odooDb = document.getElementById('odooDb').value.trim();
+                const odooUsername = document.getElementById('odooUsername').value.trim();
+                const odooPassword = document.getElementById('odooPassword').value.trim();
+                const selectedModule = document.getElementById('selectedModule').value.trim();
+                if(!odooUrl || !odooDb || !odooUsername || !odooPassword) {
+                    alert('Please fill all Odoo fields.');
+                    return;
+                }
+                formData.append('odoo_url', odooUrl);
+                formData.append('odoo_db', odooDb);
+                formData.append('odoo_username', odooUsername);
+                formData.append('odoo_password', odooPassword);
+                formData.append('selected_module', selectedModule);
+            }
+
             try {
                 const response = await fetch(`${API_BASE}/save_chatbot`, {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(configData)
+                    body: formData
                 });
-                    if(!response.ok) {
-                        alert('Failed to save chatbot configuration.');
-                        return;
-                    }
-                    const result = await response.json();
-                    if(result.status === 'success') {
-                        alert('Chatbot configuration saved successfully.');
-                        config = configData;
-                        configured = true;
-                        chatTitle.textContent = `Chat with ${chatbotName}`;
-                        chatMessages.innerHTML = '';
-                        chatContainer.style.display = 'flex';
-                        configModal.hide();
-                    } else {
-                        alert('Error saving chatbot configuration: ' + result.message);
-                    }
-                } catch(e) {
-                    alert('Error saving chatbot configuration: ' + e.message);
+                if(!response.ok) {
+                    alert('Failed to save chatbot.');
+                    return;
                 }
-            } else {
-                alert('Currently only Google Sheets data source is supported for saving configuration.');
+                const data = await response.json();
+                shareKey = data.share_key;
+                configured = true;
+                chatTitle.textContent = `Chat with ${chatbotName}`;
+                chatMessages.innerHTML = '';
+                chatContainer.style.display = 'flex';
+                configModal.hide();
+                alert('Chatbot saved successfully! Share key: ' + shareKey);
+            } catch(e) {
+                alert('Error saving chatbot: ' + e.message);
             }
         });
 
@@ -596,6 +762,17 @@
             if(e.key === 'Enter') {
                 e.preventDefault();
                 sendMessage();
+            }
+        });
+
+        micBtn.addEventListener('click', () => {
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+                isRecording = true;
+                micBtn.classList.add('recording');
+                micBtn.textContent = '🔴';
             }
         });
 
@@ -610,11 +787,18 @@
             appendMessage('user', message);
             userInput.value = '';
 
+            const payload = {message: message};
+            if(shareKey) {
+                payload.share_key = shareKey;
+            } else if(configId) {
+                payload.config_id = configId;
+            }
+
             try {
                 const response = await fetch(`${API_BASE}/chat`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({message: message, config: config})
+                    body: JSON.stringify(payload)
                 });
                 if(!response.ok) {
                     appendMessage('bot', 'Error: Failed to get response from server.');
@@ -627,10 +811,70 @@
             }
         }
 
+        async function loadChatbots() {
+            const username = prompt("Enter your username to load chatbots:");
+            if (!username) return;
+            try {
+                const response = await fetch(`${API_BASE}/list_chatbots?username=${encodeURIComponent(username)}`);
+                if (!response.ok) throw new Error('Failed to load');
+                const chatbots = await response.json();
+                chatbotsGrid.innerHTML = '';
+                chatbots.forEach(cb => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-6 mb-3';
+                    col.innerHTML = `
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">${cb.chatbot_name}</h5>
+                                <p class="card-text">Data Source: ${cb.data_source}</p>
+                                <button class="btn btn-primary me-2" onclick="loadChatbot('${cb.share_key}')">Load</button>
+                                <button class="btn btn-secondary" onclick="shareChatbot('${cb.share_key}', '${cb.chatbot_name}')">Share</button>
+                            </div>
+                        </div>
+                    `;
+                    chatbotsGrid.appendChild(col);
+                });
+                chatbotsModal.show();
+            } catch(e) {
+                alert('Error loading chatbots: ' + e.message);
+            }
+        }
+
+        function loadChatbot(shareKeyParam) {
+            shareKey = shareKeyParam;
+            configured = true;
+            chatTitle.textContent = 'Chat with Shared Bot';
+            chatMessages.innerHTML = '';
+            chatContainer.style.display = 'flex';
+            chatbotsModal.hide();
+        }
+
+        function shareChatbot(shareKey, name) {
+            const link = `${API_BASE}/shared/${shareKey}`;
+            const iframe = `<iframe src="${link}" width="600" height="500" frameborder="0"></iframe>`;
+            navigator.clipboard.writeText(iframe).then(() => alert('Iframe code copied to clipboard!'));
+        }
+
+        // Check URL params for share_key
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlShareKey = urlParams.get('share_key');
+        if(urlShareKey) {
+            shareKey = urlShareKey;
+            configured = true;
+            chatTitle.textContent = 'Shared Chatbot';
+            chatMessages.innerHTML = '';
+            chatContainer.style.display = 'flex';
+            configModal.hide();
+        }
+
         function appendMessage(sender, text) {
             const p = document.createElement('p');
             p.className = 'message ' + sender;
-            p.textContent = text;
+            if (sender === 'bot') {
+                p.innerHTML = text; // Render HTML for bot responses
+            } else {
+                p.textContent = text;
+            }
             chatMessages.appendChild(p);
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
