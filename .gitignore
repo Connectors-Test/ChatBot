@@ -4,3 +4,4 @@ backend/tests/test_data_sources.py
 .env
 credentials.txt
 TODO.md
+backend/check_endpoints.py
