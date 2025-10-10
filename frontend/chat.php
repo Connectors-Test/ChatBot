@@ -497,7 +497,7 @@
             }
 
             try {
-                const response = await fetch('/set_credentials', {
+                const response = await fetch(`${API_BASE}/set_credentials`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     body: formData.toString()

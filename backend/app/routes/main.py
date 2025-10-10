@@ -597,7 +597,11 @@ def set_credentials():
     CONFIG = request.form.to_dict()
     data_source = CONFIG.get('data_source')
 
-    gemini_client = genai.Client(api_key=CONFIG['gemini_api_key'])
+    api_key = CONFIG.get('gemini_api_key', '')
+    if api_key and api_key.strip():
+        gemini_client = genai.Client(api_key=api_key)
+    else:
+        gemini_client = None
 
     if data_source == 'google_sheets':
         try:
@@ -1007,8 +1011,71 @@ def chat():
         selected_tables = json.loads(cb.get('selected_tables') or '[]')
         worksheets = []  # Reset
         gemini_client = genai.Client(api_key=CONFIG['gemini_api_key'])
-        # Note: For shared, we assume credentials are set, but for demo, skip full setup
-        db_conn = None  # Would need to set up based on data_source
+        # Set up connections for shared chatbot
+        db_conn = None
+        if CONFIG['data_source'] == 'google_sheets':
+            try:
+                service_json = json.loads(CONFIG['service_account_json'])
+                creds = Credentials.from_service_account_info(service_json, scopes=["https://www.googleapis.com/auth/spreadsheets.readonly"])
+                gc = gspread.authorize(creds)
+                spreadsheet = gc.open_by_key(CONFIG['sheet_id'])
+                worksheets = [spreadsheet.worksheet(name) for name in CONFIG['selected_sheets']]
+            except Exception as e:
+                logging.error(f"Failed to set up Google Sheets for shared chatbot: {str(e)}")
+                return jsonify({'response': f'Failed to set up Google Sheets: {str(e)}'})
+        elif CONFIG['data_source'] == 'mysql':
+            try:
+                db_conn = pymysql.connect(
+                    host=CONFIG['db_host'],
+                    port=int(CONFIG['db_port']),
+                    user=CONFIG['db_username'],
+                    password=CONFIG['db_password'],
+                    database=CONFIG['db_name']
+                )
+            except Exception as e:
+                logging.error(f"Failed to connect to MySQL for shared chatbot: {str(e)}")
+                return jsonify({'response': f'Failed to connect to MySQL: {str(e)}'})
+        elif CONFIG['data_source'] == 'postgresql':
+            try:
+                db_conn = psycopg2.connect(
+                    host=CONFIG['db_host'],
+                    port=int(CONFIG['db_port']),
+                    user=CONFIG['db_username'],
+                    password=CONFIG['db_password'],
+                    database=CONFIG['db_name']
+                )
+            except Exception as e:
+                logging.error(f"Failed to connect to PostgreSQL for shared chatbot: {str(e)}")
+                return jsonify({'response': f'Failed to connect to PostgreSQL: {str(e)}'})
+        elif CONFIG['data_source'] == 'neo4j':
+            try:
+                uri = CONFIG['db_host']
+                if uri.startswith("neo4j+s://"):
+                    uri = uri.replace("neo4j+s://", "neo4j+ssc://")
+                elif uri.startswith("bolt+s://"):
+                    uri = uri.replace("bolt+s://", "bolt+ssc://")
+                elif uri.startswith("neo4j://") and "localhost" in uri:
+                    uri = uri.replace("neo4j://", "bolt://")
+                username = CONFIG['db_username']
+                password = CONFIG['db_password']
+                database = CONFIG['db_name']
+                if database != 'neo4j':
+                    logging.warning(f"Overriding Neo4j database name from {database} to 'neo4j' for Aura compatibility")
+                    database = 'neo4j'
+                CONFIG['db_name'] = database
+                driver = GraphDatabase.driver(uri, auth=(username, password))
+                db_conn = driver
+            except Exception as e:
+                logging.error(f"Failed to connect to Neo4j for shared chatbot: {str(e)}")
+                return jsonify({'response': f'Failed to connect to Neo4j: {str(e)}'})
+        elif CONFIG['data_source'] == 'mongodb':
+            try:
+                client = MongoClient(CONFIG['mongo_uri'], tls=True, tlsAllowInvalidCertificates=True)
+                db_conn = client[CONFIG['mongo_db_name']]
+            except Exception as e:
+                logging.error(f"Failed to connect to MongoDB for shared chatbot: {str(e)}")
+                return jsonify({'response': f'Failed to connect to MongoDB: {str(e)}'})
+        # For other data sources (oracle, mssql, airtable, databricks, supabase, snowflake, odoo), connections are handled in the chat function using DatabaseService
 
     data_source = CONFIG.get('data_source')
     user_input = data.get('message')
@@ -1054,33 +1121,39 @@ def chat():
                 return jsonify({'response': f'Failed to fetch data from sheet {sheet_name} using gspread.'})
         data_desc = "Spreadsheet data (gspread, limited to 1000 rows per sheet)"
     elif data_source == 'neo4j':
-        all_data = {}
-        driver = db_conn
-        with driver.session(database=CONFIG['db_name']) as session:
-            for label in selected_tables:
-                result = session.run(f"MATCH (n:{label}) RETURN n")
-                records = [dict(record['n']) for record in result]
-                if limit:
-                    records = records[:limit]
-                all_data[label] = records
-        data_desc = "Graph data"
+        try:
+            all_data = {}
+            driver = db_conn
+            with driver.session(database=CONFIG['db_name']) as session:
+                for label in selected_tables:
+                    result = session.run(f"MATCH (n:{label}) RETURN n")
+                    records = [dict(record['n']) for record in result]
+                    if limit:
+                        records = records[:limit]
+                    all_data[label] = records
+            data_desc = "Graph data"
+        except Exception as e:
+            return jsonify({'response': f'Error fetching from Neo4j: {str(e)}'})
     elif data_source == 'mongodb':
-        all_data = {}
-        for collection in selected_tables:
-            coll = db_conn[collection]
-            documents = list(coll.find())
-            if limit:
-                documents = documents[:limit]
-            # Convert ObjectId and datetime to string for JSON serialization
-            for doc in documents:
-                for key, value in doc.items():
-                    if hasattr(value, '__class__'):
-                        if value.__class__.__name__ == 'ObjectId':
-                            doc[key] = str(value)
-                        elif value.__class__.__name__ == 'datetime':
-                            doc[key] = value.isoformat()
-            all_data[collection] = documents
-        data_desc = "MongoDB data"
+        try:
+            all_data = {}
+            for collection in selected_tables:
+                coll = db_conn[collection]
+                documents = list(coll.find())
+                if limit:
+                    documents = documents[:limit]
+                # Convert ObjectId and datetime to string for JSON serialization
+                for doc in documents:
+                    for key, value in doc.items():
+                        if hasattr(value, '__class__'):
+                            if value.__class__.__name__ == 'ObjectId':
+                                doc[key] = str(value)
+                            elif value.__class__.__name__ == 'datetime':
+                                doc[key] = value.isoformat()
+                all_data[collection] = documents
+            data_desc = "MongoDB data"
+        except Exception as e:
+            return jsonify({'response': f'Error fetching from MongoDB: {str(e)}'})
 
     elif data_source == 'postgresql':
         all_data = {}
@@ -1537,7 +1610,7 @@ def shared_chatbot(share_key):
             </div>
         </div>
         <script>
-            const API_BASE = "{Config().FRONTEND_URL or 'http://localhost:5001'}";
+            const API_BASE = window.location.origin;
             const shareKey = "{share_key}";
 
             async function sendMessage() {{
