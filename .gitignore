@@ -8,4 +8,7 @@ backend/check_endpoints.py
 check_embedded_chatbot.html
 backend/tests/__pycache__/test_data_sources.cpython-313.pyc
 __pycache__/
+backend/app/__pycache__/__init__.cpython-313.pyc
+backend/app/__pycache__/data_sources.cpython-313.pyc
+backend/app/__pycache__/models.cpython-313.pyc
 *.pyc
