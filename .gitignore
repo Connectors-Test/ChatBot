@@ -1,6 +1,7 @@
 chatbots.db
 /venv
-backend/tests/test_data_sources.py
+__pycache__/
+backend/tests
 .env
 credentials.txt
 TODO.md
